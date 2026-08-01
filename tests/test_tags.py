@@ -9,10 +9,10 @@ import pytest
 import django_div
 from django_div import (
     BUILTIN_TAGS,
-    PRE_TAGS,
-    RAW_TEXT_TAGS,
+    PRE_ELEMENTS,
+    RAW_TEXT_ELEMENTS,
     TAG_CLASSES,
-    VOID_TAGS,
+    VOID_ELEMENTS,
     Tag,
     from_html,
     parse,
@@ -142,7 +142,7 @@ HTML_ELEMENTS = set(
 LEGACY_ELEMENTS = {"param"}
 
 TAGS = sorted(BUILTIN_TAGS)
-NORMAL_TAGS = [t for t in TAGS if t not in VOID_TAGS and t not in RAW_TEXT_TAGS]
+NORMAL_TAGS = [t for t in TAGS if t not in VOID_ELEMENTS and t not in RAW_TEXT_ELEMENTS]
 
 
 # --- coverage of the standard -----------------------------------------------
@@ -158,7 +158,7 @@ def test_no_unknown_tags_are_generated():
     assert not BUILTIN_TAGS - HTML_ELEMENTS - LEGACY_ELEMENTS
 
 
-@pytest.mark.parametrize("category", [VOID_TAGS, RAW_TEXT_TAGS, PRE_TAGS])
+@pytest.mark.parametrize("category", [VOID_ELEMENTS, RAW_TEXT_ELEMENTS, PRE_ELEMENTS])
 def test_categories_only_name_real_tags(category):
     assert not category - BUILTIN_TAGS
 
@@ -175,7 +175,7 @@ def test_tag_is_exported(tag):
 
 @pytest.mark.parametrize("tag", TAGS)
 def test_tag_renders_empty(tag):
-    expected = f"<{tag} />" if tag in VOID_TAGS else f"<{tag}></{tag}>"
+    expected = f"<{tag} />" if tag in VOID_ELEMENTS else f"<{tag}></{tag}>"
     assert str(TAG_CLASSES[tag]()) == expected
 
 
@@ -193,26 +193,26 @@ def test_tag_knows_its_own_name(tag):
 @pytest.mark.parametrize("tag", TAGS)
 def test_tag_reports_its_categories(tag):
     item = TAG_CLASSES[tag]()
-    assert item.is_void is (tag in VOID_TAGS)
-    assert item.is_raw_text is (tag in RAW_TEXT_TAGS)
+    assert item.is_void is (tag in VOID_ELEMENTS)
+    assert item.is_raw_text is (tag in RAW_TEXT_ELEMENTS)
 
 
 # --- behavior by category ---------------------------------------------------
 
 
-@pytest.mark.parametrize("tag", sorted(VOID_TAGS))
+@pytest.mark.parametrize("tag", sorted(VOID_ELEMENTS))
 def test_void_tags_self_close_and_refuse_children(tag):
     assert str(TAG_CLASSES[tag]()) == f"<{tag} />"
     with pytest.raises(ValueError, match="void element"):
         TAG_CLASSES[tag]("child")
 
 
-@pytest.mark.parametrize("tag", sorted(RAW_TEXT_TAGS))
+@pytest.mark.parametrize("tag", sorted(RAW_TEXT_ELEMENTS))
 def test_raw_text_tags_do_not_escape(tag):
     assert str(TAG_CLASSES[tag]("a < b & c")) == f"<{tag}>a < b & c</{tag}>"
 
 
-@pytest.mark.parametrize("tag", sorted(RAW_TEXT_TAGS))
+@pytest.mark.parametrize("tag", sorted(RAW_TEXT_ELEMENTS))
 def test_raw_text_tags_refuse_their_own_closing_tag(tag):
     with pytest.raises(ValueError, match="would end the element"):
         str(TAG_CLASSES[tag](f"</{tag}>"))
@@ -225,7 +225,7 @@ def test_normal_tags_escape_and_nest(tag):
     assert str(cls(cls())) == f"<{tag}><{tag}></{tag}></{tag}>"
 
 
-@pytest.mark.parametrize("tag", sorted(PRE_TAGS))
+@pytest.mark.parametrize("tag", sorted(PRE_ELEMENTS))
 def test_pre_tags_keep_their_whitespace(tag):
     html = f"<{tag}>  a\n  b  </{tag}>"
     assert str(from_html(html, parser="html.parser")) == html
@@ -236,7 +236,7 @@ def test_pre_tags_keep_their_whitespace(tag):
 
 @pytest.mark.parametrize("tag", TAGS)
 def test_tag_round_trips_through_parsing(tag):
-    html = f"<{tag} />" if tag in VOID_TAGS else f"<{tag}></{tag}>"
+    html = f"<{tag} />" if tag in VOID_ELEMENTS else f"<{tag}></{tag}>"
     # html.parser leaves the fragment alone; lxml would move a stray <td>
     # into a table, which is correct for a document but not a round trip.
     parsed = parse(html, parser="html.parser")
@@ -283,7 +283,7 @@ def test_tag_constructor_takes_children_positionally_and_attrs_by_keyword(tag):
 def test_attributes_cannot_be_passed_positionally(tag):
     cls = TAG_CLASSES[tag]
     # A second positional is another child, never an attribute value.
-    item = cls("a", "b") if tag not in VOID_TAGS else cls()
+    item = cls("a", "b") if tag not in VOID_ELEMENTS else cls()
     assert item.attrs == {}
 
 
@@ -326,3 +326,28 @@ def test_mixed_children_and_several_attributes(tag):
     assert str(cls(cls("a"), "tail", class_="md", id="x")) == (
         f'<{tag} class="md" id="x"><{tag}>a</{tag}>tail</{tag}>'
     )
+
+
+def test_documented_element_count_matches_reality():
+    """The '114 elements' claim in the docs and README tracks BUILTIN_TAGS."""
+    import pathlib
+
+    root = pathlib.Path(__file__).parent.parent
+    claim = f"{len(BUILTIN_TAGS)} elements"
+    for name in ("docs/reference.md", "docs/building.md", "README.md"):
+        assert claim in (root / name).read_text(), name
+
+
+@pytest.mark.parametrize("tag", TAGS)
+def test_builtin_docstrings_link_to_mdn(tag):
+    assert (
+        f"developer.mozilla.org/en-US/docs/Web/HTML/Element/{tag}"
+        in TAG_CLASSES[tag].__doc__
+    )
+
+
+def test_custom_elements_do_not_claim_mdn_pages():
+    from django_div import tag_class
+
+    cls = tag_class("not-a-real-element")
+    assert "mozilla" not in (cls.__doc__ or "")

@@ -29,13 +29,13 @@ a built-in element's.
 
 ### A whole document
 
-There is no `Doctype` element, because a doctype isn't one. Use `Raw` and
-return a list:
+A doctype isn't an element, so it has its own item class. `Doctype()`
+renders the HTML5 doctype, and a document is a list:
 
 ```python
 def document(title, *body, lang="en"):
     return [
-        Raw(content="<!DOCTYPE html>"),
+        Doctype(),
         Html(Head(Meta(charset="utf-8"), Title(title)), Body(*body), lang=lang),
     ]
 
@@ -316,6 +316,13 @@ def pretty(item, indent=0):
   </p>
 </div>
 ```
+
+## Markdown
+
+The same tree renders as Markdown, and Markdown reads back in. Those
+recipes — changelog generation, link hardening, code-block extraction,
+document merging — have their own page: the
+[Markdown cookbook](markdown-cookbook.md).
 
 ## Serializing
 

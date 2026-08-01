@@ -19,6 +19,7 @@ from django_div import (
     Body,
     Button,
     Div,
+    Doctype,
     Form,
     Head,
     Html,
@@ -67,7 +68,7 @@ def test_component():
 
 def document(title, *body, lang="en"):
     return [
-        Raw(content="<!DOCTYPE html>"),
+        Doctype(),
         Html(Head(Meta(charset="utf-8"), Title(title)), Body(*body), lang=lang),
     ]
 

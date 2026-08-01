@@ -32,14 +32,15 @@ __all__ = [
     "ATTR_NAME_RE",
     "ATTR_OVERRIDES",
     "BUILTIN_TAGS",
-    "DOCUMENT_TAGS",
+    "DOCUMENT_ELEMENTS",
     "ITEM_CLASSES",
     "PARSERS",
-    "PRE_TAGS",
-    "RAW_TEXT_TAGS",
+    "PRE_ELEMENTS",
+    "RAW_TEXT_ELEMENTS",
     "TAG_CLASSES",
-    "VOID_TAGS",
+    "VOID_ELEMENTS",
     "Comment",
+    "Doctype",
     "HtmlItem",
     "Raw",
     "Tag",
@@ -54,7 +55,7 @@ __all__ = [
     # Generated tag classes are appended at the bottom of this module.
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 #: What an attribute name may look like, per the WHATWG HTML syntax rules:
@@ -77,7 +78,7 @@ ATTR_OVERRIDES = {
 }
 
 #: Wrappers a parser may invent around a fragment.
-DOCUMENT_TAGS = frozenset({"body", "head", "html"})
+DOCUMENT_ELEMENTS = frozenset({"body", "head", "html"})
 
 #: Keys Pydantic passes back when it re-validates a serialized Tag.
 FIELD_KEYS = frozenset({"attrs", "children", "tag", "type"})
@@ -91,17 +92,17 @@ ITEM_CLASSES: dict[str, type[HtmlItem]] = {}
 PARSERS = ("lxml", "html5lib", "html.parser")
 
 #: Elements whose text content is significant, so parsing keeps it verbatim.
-PRE_TAGS = frozenset({"pre", "textarea"})
+PRE_ELEMENTS = frozenset({"pre", "textarea"})
 
 #: Elements whose content is raw text, never HTML-escaped on render. Escaping
 #: these would corrupt them: ``if (a < b)`` is not ``if (a &lt; b)``.
-RAW_TEXT_TAGS = frozenset({"script", "style"})
+RAW_TEXT_ELEMENTS = frozenset({"script", "style"})
 
 #: Tag name -> generated class, for rebuilding a typed tree from a dump.
 TAG_CLASSES: dict[str, type[Tag]] = {}
 
 #: HTML elements that never have children and render self-closed.
-VOID_TAGS = frozenset(
+VOID_ELEMENTS = frozenset(
     {
         "area",
         "base",
@@ -256,7 +257,8 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     try:
         from bs4 import BeautifulSoup
         from bs4.element import Comment as SoupComment
-        from bs4.element import Doctype, NavigableString
+        from bs4.element import Doctype as SoupDoctype
+        from bs4.element import NavigableString
         from bs4.element import Tag as SoupTag
     except ImportError as exc:  # pragma: no cover - depends on install extras
         raise ImportError("parse() requires beautifulsoup4") from exc
@@ -266,8 +268,8 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     pending: list[tuple[Any, Tag]] = []
 
     def convert(node: Any) -> HtmlItem | None:
-        if isinstance(node, Doctype):
-            return Raw(content=f"<!DOCTYPE {node}>")
+        if isinstance(node, SoupDoctype):
+            return Doctype(content=str(node))
         if isinstance(node, SoupComment):
             return Comment(content=str(node))
         if isinstance(node, NavigableString):
@@ -299,7 +301,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
 
     def is_blank_text(node: Any) -> bool:
         is_plain_string = isinstance(node, NavigableString) and not isinstance(
-            node, (SoupComment, Doctype)
+            node, (SoupComment, SoupDoctype)
         )
         return is_plain_string and not str(node).strip()
 
@@ -312,7 +314,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
         """
         unwrapped = []
         for item in items:
-            if isinstance(item, Tag) and item.tag in DOCUMENT_TAGS:
+            if isinstance(item, Tag) and item.tag in DOCUMENT_ELEMENTS:
                 unwrapped.extend(unwrap_implicit(item.children))
             else:
                 unwrapped.append(item)
@@ -323,7 +325,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     while pending:
         soup_node, item = pending.pop()
         item.children = convert_children(
-            soup_node.contents, verbatim=soup_node.name in PRE_TAGS
+            soup_node.contents, verbatim=soup_node.name in PRE_ELEMENTS
         )
     if re.search(r"<\s*(html|head|body)\b", html, re.IGNORECASE):
         return roots
@@ -442,6 +444,26 @@ class Comment(HtmlItem):
         return marker()(f"<!--{content}-->")
 
 
+class Doctype(HtmlItem):
+    """A document type declaration. Defaults to the HTML5 doctype.
+
+    ``content`` is what follows ``<!DOCTYPE`` — ``html`` for every modern
+    document, or a legacy public/system identifier string when parsing old
+    markup. A ``>`` in the content would end the declaration early and leak
+    the rest into the document, so rendering refuses it.
+    """
+
+    type: Literal["doctype"] = "doctype"
+    content: str = "html"
+
+    def __str__(self) -> str:
+        if ">" in self.content:
+            raise ValueError(
+                "doctype content cannot contain '>'; it would end the declaration"
+            )
+        return marker()(f"<!DOCTYPE {self.content}>")
+
+
 class Raw(HtmlItem):
     """Pre-trusted markup, passed through unescaped.
 
@@ -492,7 +514,7 @@ class Tag(HtmlItem):
                 "as in Tag('div', ...)"
             )
         items = list(iter_children(children))
-        if items and _tag in VOID_TAGS:
+        if items and _tag in VOID_ELEMENTS:
             # Rendering would drop them silently, which hides the mistake.
             raise ValueError(f"<{_tag}> is a void element and cannot have children")
         super().__init__(
@@ -503,11 +525,11 @@ class Tag(HtmlItem):
 
     @property
     def is_raw_text(self) -> bool:
-        return self.tag in RAW_TEXT_TAGS
+        return self.tag in RAW_TEXT_ELEMENTS
 
     @property
     def is_void(self) -> bool:
-        return self.tag in VOID_TAGS
+        return self.tag in VOID_ELEMENTS
 
     @property
     def text(self) -> str:
@@ -641,7 +663,9 @@ class Text(HtmlItem):
         return marker()(escape(self.content))
 
 
-ITEM_CLASSES.update({"comment": Comment, "raw": Raw, "tag": Tag, "text": Text})
+ITEM_CLASSES.update(
+    {"comment": Comment, "doctype": Doctype, "raw": Raw, "tag": Tag, "text": Text}
+)
 
 # Generated element classes. Names are capitalized to stay clear of builtins
 # like `input`, `object`, and `map`.
@@ -764,6 +788,11 @@ _TAGS = [
 
 for _tag in _TAGS:
     _cls = tag_class(_tag)
+    # Custom elements registered later get no MDN link; these are standard.
+    _cls.__doc__ = (
+        f"The HTML <{_tag}> element.\n\n"
+        f"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/{_tag}"
+    )
     globals()[_cls.__name__] = _cls
     __all__.append(_cls.__name__)
 

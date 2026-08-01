@@ -1,8 +1,10 @@
 # Building HTML
 
 Every HTML element has a class, named after the tag with a capital letter:
-`Div`, `P`, `H1`, `Textarea`. Children are positional arguments, attributes
-are keyword arguments.
+`Div`, `P`, `H1`, `Textarea` — all 114 elements of the
+[WHATWG living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3),
+each documented on [MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Element).
+Children are positional arguments, attributes are keyword arguments.
 
 ```python
 from django_div import A, Div, H1, P

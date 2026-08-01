@@ -30,11 +30,18 @@ Tests enforce both halves across every element class, so this stays true.
 
 ## Items
 
-All four item types inherit from `HtmlItem`.
+All five item types inherit from `HtmlItem`.
 
 ### `Tag`
 
 An element: a name, children, and attributes.
+
+!!! note "Tag vs. element"
+
+    MDN and the HTML spec would call this class an *element* — a tag is
+    strictly just the `<div>` marker. The name follows BeautifulSoup, whose
+    node class is also `Tag`, and everyday usage. The `.tag` field holds the
+    element's tag name, which matches lxml's `Element.tag` exactly.
 
 ```python
 Tag(name, *children, **attrs)
@@ -98,6 +105,12 @@ Unescaped markup. `Raw(content="<b>x</b>")` renders as-is.
 
     Never build a `Raw` from untrusted input.
 
+### `Doctype`
+
+`Doctype()` renders `<!DOCTYPE html>`; `content` overrides what follows
+`<!DOCTYPE`, for legacy identifiers. A `>` in the content would end the
+declaration early, so rendering refuses it.
+
 ### `Comment`
 
 `Comment(content="note")` renders `<!--note-->`. Comment syntax rules are
@@ -142,10 +155,10 @@ closed early and parse the remainder as live markup.
 | `TAG_CLASSES` | Tag name to class, including ones registered at runtime |
 | `BUILTIN_TAGS` | The element names this library ships |
 | `ITEM_CLASSES` | Discriminator to leaf class |
-| `VOID_TAGS` | Elements that self-close |
-| `RAW_TEXT_TAGS` | `script`, `style` |
-| `PRE_TAGS` | `pre`, `textarea` |
-| `DOCUMENT_TAGS` | `html`, `head`, `body` |
+| `VOID_ELEMENTS` | Elements that self-close |
+| `RAW_TEXT_ELEMENTS` | `script`, `style` |
+| `PRE_ELEMENTS` | `pre`, `textarea` |
+| `DOCUMENT_ELEMENTS` | `html`, `head`, `body` |
 | `ATTR_OVERRIDES` | Irregular attribute spellings |
 | `ATTR_NAME_RE` | What a rendered attribute name may look like |
 | `PARSERS` | Parser preference order |
@@ -155,13 +168,32 @@ closed early and parse the remainder as live markup.
 Every element in the HTML living standard has a generated class, named after
 the tag with a capital letter: `Div`, `P`, `H1`, `Textarea`, `Del`. Names are
 capitalized so they never collide with builtins like `input`, `object`, or
-`map`. The set tracks the WHATWG living standard, including recent additions
-like `Search` and `Selectedcontent`.
+`map`.
+
+**114 elements** are generated — every element in the
+[WHATWG HTML living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3)
+including recent additions like `search` and `selectedcontent`, plus the
+legacy `param`. Each class's docstring links to its
+[MDN element reference](https://developer.mozilla.org/en-US/docs/Web/HTML/Element),
+the best per-element documentation available, so `help(Div)` points at the
+right page.
 
 `param` is also included — obsolete, but still found in old documents.
 
 Tests are parametrized over `TAG_CLASSES`, so every element is checked for
 rendering, attributes, category behavior, and both round trips.
+
+## `django_div.markdown`
+
+`to_markdown(item)`
+:   Render an item or list of items as Markdown. No dependencies.
+
+`from_markdown(text, *, parser=None)`
+:   Read Markdown into a tree via markdown-it-py; needs the `markdown` extra.
+
+`INLINE_WRAPPERS` / `HEADING_TAGS` / `CONTAINER_TAGS` / `TRANSPARENT_TAGS` / `DROP_TAGS`
+:   The per-tag reference tables driving the renderer; extend them to teach
+    it new elements.
 
 ## `django_div.django`
 
