@@ -22,6 +22,7 @@ group: pytest, ruff, prek, Django, and both parser backends.
 | `just docs` | Serve the docs with live reload |
 | `just docs-build` | Build the docs into `site/`, plus llms.txt |
 | `just example` | Run `examples/example.py` |
+| `just stub` | Regenerate `src/django_div/__init__.pyi` |
 | `just install-hooks` | Install the prek git hooks |
 | `just update-hooks` | Update pinned hook versions |
 
@@ -33,6 +34,7 @@ just test -k parse -x
 
 ```
 src/django_div/__init__.py   the library
+src/django_div/__init__.pyi  generated type stub, see `just stub`
 src/django_div/django.py     the Django integration
 tests/test_django_div.py     core behavior
 tests/test_tags.py           every tag, parametrized
@@ -70,7 +72,9 @@ fails.
 
 Adding an element means adding it to `_TAGS`. If it belongs to a category,
 add it to `VOID_ELEMENTS`, `RAW_TEXT_ELEMENTS`, or `PRE_ELEMENTS` as well — the tests
-will tell you.
+will tell you. Then run `just stub`: the element classes are created at
+runtime, which type checkers cannot see, so `src/django_div/__init__.pyi`
+declares them all. `tests/test_stub.py` fails if the stub goes stale.
 
 Deprecation warnings are errors:
 

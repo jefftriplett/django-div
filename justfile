@@ -26,6 +26,10 @@
 	-uv run ruff check --fix
 	-uv run ruff format
 
+# regenerate the type stub after changing the public API
+@stub:
+	uv run python scripts/gen_stub.py
+
 @test *ARGS:
 	uv run pytest {{ ARGS }}
 
