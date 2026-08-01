@@ -291,23 +291,129 @@ def _list(tag: Tag, *, indent: int = 0) -> str:
 
 
 def _table(tag: Tag) -> str:
-    """A <table> as a GFM pipe table; the first row is the header."""
-    rows = []
-    for row in tag.find_all("tr"):
-        cells = [
-            " ".join(_inline_children(cell).split()).replace("|", r"\|")
-            for cell in row.children
-            if isinstance(cell, Tag) and cell.tag in ("th", "td")
-        ]
-        if cells:
-            rows.append(cells)
-    if not rows:
+    """A <table> as a GFM pipe table.
+
+    Header and alignment come from the thead/th cells, thead/tbody/tfoot
+    render in that order regardless of source order, a caption becomes a
+    paragraph above the table, and a headerless table gets an empty header
+    row rather than having its first data row promoted. Tables using
+    colspan/rowspan have no GFM form and fall back to their HTML.
+    """
+    caption, head_rows, body_rows, foot_rows = _table_parts(tag)
+    all_rows = head_rows + body_rows + foot_rows
+    for row in all_rows:
+        for cell in _table_cells(row):
+            if "colspan" in cell.attrs or "rowspan" in cell.attrs:
+                return str(tag)
+
+    header_cells: list[Tag] = []
+    if head_rows:
+        header_cells = _table_cells(head_rows[0])
+        data_rows = head_rows[1:] + body_rows + foot_rows
+    elif body_rows and any(cell.tag == "th" for cell in _table_cells(body_rows[0])):
+        header_cells = _table_cells(body_rows[0])
+        data_rows = body_rows[1:] + foot_rows
+    else:
+        data_rows = body_rows + foot_rows
+
+    rendered = [[_table_cell(cell) for cell in header_cells]] if header_cells else []
+    rendered += [[_table_cell(cell) for cell in _table_cells(row)] for row in data_rows]
+    rendered = [row for row in rendered if row]
+    if not rendered:
         return ""
-    width = max(len(row) for row in rows)
-    padded = [row + [""] * (width - len(row)) for row in rows]
-    lines = [
-        "| " + " | ".join(padded[0]) + " |",
-        "| " + " | ".join(["---"] * width) + " |",
+    width = max(len(row) for row in rendered)
+    padded = [row + [""] * (width - len(row)) for row in rendered]
+
+    if header_cells:
+        header, *data = padded
+        separator = [_table_alignment(cell) for cell in header_cells]
+        separator += ["---"] * (width - len(separator))
+    else:
+        # GFM requires a header row; an empty one keeps data as data.
+        header, data = [""] * width, padded
+        separator = ["---"] * width
+
+    lines = ["| " + " | ".join(header) + " |"]
+    lines += ["| " + " | ".join(separator) + " |"]
+    lines += ["| " + " | ".join(row) + " |" for row in data]
+    table = "\n".join(lines)
+    if caption is not None:
+        return f"{_inline_children(caption)}\n\n{table}"
+    return table
+
+
+def _table_alignment(cell: Tag) -> str:
+    """A GFM separator token from a cell's text-align style or align attr."""
+    style = cell.attrs.get("style", "")
+    if isinstance(style, dict):
+        style = ";".join(f"{name}:{value}" for name, value in style.items())
+    normalized = str(style).replace(" ", "").replace("_", "-").lower()
+    align = str(cell.attrs.get("align", "")).lower()
+    if "text-align:center" in normalized or align == "center":
+        return ":-:"
+    if "text-align:right" in normalized or align == "right":
+        return "--:"
+    if "text-align:left" in normalized or align == "left":
+        return ":--"
+    return "---"
+
+
+def _table_cell(cell: Tag) -> str:
+    """One cell as a single line: hard breaks become <br>, pipes escaped."""
+    parts = []
+    for child in cell.children:
+        if isinstance(child, Tag) and child.tag == "br":
+            parts.append("<br>")
+        elif isinstance(child, Tag) and (
+            child.tag in CONTAINER_TAGS or child.tag == "p"
+        ):
+            # A block inside a cell has to flatten; <br> keeps the break.
+            if parts:
+                parts.append("<br>")
+            parts.append(_inline_children(child))
+        else:
+            parts.append(_inline(child))
+    text = "".join(parts).replace("\\\n", "<br>")
+    return " ".join(text.split()).replace("|", r"\|")
+
+
+def _table_cells(row: Tag) -> list[Tag]:
+    return [
+        cell
+        for cell in row.children
+        if isinstance(cell, Tag) and cell.tag in ("td", "th")
     ]
-    lines += ["| " + " | ".join(row) + " |" for row in padded[1:]]
-    return "\n".join(lines)
+
+
+def _table_parts(
+    tag: Tag,
+) -> tuple[Tag | None, list[Tag], list[Tag], list[Tag]]:
+    """Split a table into caption and thead/body/tfoot rows.
+
+    Only direct structure is read — never find_all — so rows of a nested
+    table stay inside their own table instead of leaking into this one.
+    """
+    caption = None
+    head_rows: list[Tag] = []
+    body_rows: list[Tag] = []
+    foot_rows: list[Tag] = []
+    for child in tag.children:
+        if not isinstance(child, Tag):
+            continue
+        if child.tag == "caption":
+            caption = child
+        elif child.tag == "tr":
+            body_rows.append(child)
+        elif child.tag in ("thead", "tbody", "tfoot"):
+            rows = [
+                row
+                for row in child.children
+                if isinstance(row, Tag) and row.tag == "tr"
+            ]
+            if child.tag == "thead":
+                head_rows += rows
+            elif child.tag == "tfoot":
+                foot_rows += rows
+            else:
+                body_rows += rows
+    return caption, head_rows, body_rows, foot_rows

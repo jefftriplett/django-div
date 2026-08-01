@@ -178,3 +178,79 @@ def test_markdown_round_trip_is_stable():
 
 def test_to_markdown_of_docstring_example():
     assert to_markdown(Div(H1("Title"), P("Body text."))) == "# Title\n\nBody text."
+
+
+# --- tables, thoroughly ------------------------------------------------------
+
+
+def test_table_alignment_round_trips():
+    source = "| L | C | R |\n| :-- | :-: | --: |\n| a | b | c |"
+    assert to_markdown(from_markdown(source)) == source
+
+
+def test_table_alignment_from_style_mapping():
+    table = Table(Tr(Th("R", style={"text_align": "right"})), Tr(Td("1")))
+    assert to_markdown(table) == "| R |\n| --: |\n| 1 |"
+
+
+def test_table_alignment_from_legacy_align_attr():
+    table = Table(Tr(Th("C", align="center")), Tr(Td("1")))
+    assert to_markdown(table) == "| C |\n| :-: |\n| 1 |"
+
+
+def test_nested_table_rows_do_not_leak():
+    inner = Table(Tr(Td("inner")))
+    out = to_markdown(Table(Tr(Th("h")), Tr(Td(inner))))
+    assert out.count("inner") == 1, "the nested table must appear exactly once"
+    assert "<table>" in out, "as HTML inside the cell"
+
+
+def test_headerless_table_gets_an_empty_header():
+    out = to_markdown(Table(Tr(Td("a"), Td("b")), Tr(Td("c"), Td("d"))))
+    assert out.splitlines()[0] == "|  |  |"
+    assert "| a | b |" in out, "data stays data"
+
+
+def test_thead_tbody_tfoot_render_in_that_order():
+    from django_div import Tbody, Tfoot, Thead
+
+    table = Table(
+        Tfoot(Tr(Td("foot"))),
+        Thead(Tr(Th("head"))),
+        Tbody(Tr(Td("body"))),
+    )
+    assert to_markdown(table) == "| head |\n| --- |\n| body |\n| foot |"
+
+
+def test_caption_becomes_a_paragraph_above():
+    from django_div import Caption
+
+    out = to_markdown(Table(Caption("Prices"), Tr(Th("a")), Tr(Td("1"))))
+    assert out.startswith("Prices\n\n| a |")
+
+
+def test_hard_break_in_cell_becomes_br():
+    out = to_markdown(Table(Tr(Th("x")), Tr(Td("one", Br(), "two"))))
+    assert "| one<br>two |" in out
+
+
+def test_block_content_in_cell_flattens_with_br():
+    out = to_markdown(Table(Tr(Th("h")), Tr(Td(P("one"), P("two")))))
+    assert "| one<br>two |" in out
+
+
+def test_colspan_falls_back_to_html():
+    out = to_markdown(Table(Tr(Th("a"), Th("b")), Tr(Td("wide", colspan=2))))
+    assert out.startswith("<table>")
+    assert 'colspan="2"' in out
+
+
+def test_ragged_rows_are_padded():
+    out = to_markdown(Table(Tr(Th("a"), Th("b")), Tr(Td("only"))))
+    assert "| only |  |" in out
+
+
+def test_inline_markup_in_cells():
+    out = to_markdown(Table(Tr(Th(Em("it"))), Tr(Td(A("x", href="/x")))))
+    assert "| *it* |" in out
+    assert "| [x](/x) |" in out

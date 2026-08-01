@@ -31,7 +31,7 @@ to_markdown(from_html("<article><h1>Title</h1><p>Body with <a href='/x'>a link</
 | `a`, `img` | `[text](href)`, `![alt](src)` — `title` included when present |
 | `ul` / `ol` / `li` | `-` / `1.` items, nesting indented, `start=` honored |
 | `blockquote` | `> ` prefixed lines |
-| `table` | GFM pipe table, first row as header |
+| `table` | GFM pipe table — see [Tables](#tables) |
 | `hr`, `br` | `---`, backslash hard break |
 | `div`, `section`, … | invisible — children render as blocks |
 | `span`, `mark`, … | invisible — children flow through inline |
@@ -49,6 +49,42 @@ so they are dropped. Text is emitted verbatim, not escaped, so content that
 looks like Markdown syntax will be treated as Markdown by whatever renders
 the output. Treat `to_markdown()` as a conversion, not an encoding:
 round-trips preserve structure, not bytes.
+
+## Tables
+
+Tables get the fullest treatment, because they are where HTML-to-Markdown
+conversions usually fall apart:
+
+```python
+Table(
+    Caption("Prices"),
+    Thead(Tr(Th("Item"), Th("Cost", style={"text_align": "right"}))),
+    Tbody(Tr(Td("Apple"), Td("1"))),
+)
+```
+
+```markdown
+Prices
+
+| Item | Cost |
+| --- | --: |
+| Apple | 1 |
+```
+
+- **Alignment** comes from `text-align` styles (string or mapping) or the
+  legacy `align` attribute, and round-trips: `from_markdown` keeps the
+  alignment markdown-it records, and `to_markdown` emits it back as
+  `:--` / `:-:` / `--:`.
+- **`thead` / `tbody` / `tfoot` render in that order**, matching how HTML
+  displays them, even when the source declares them differently.
+- **A caption** becomes a paragraph above the table — GFM has no caption.
+- **A headerless table** gets an empty header row, since GFM requires one;
+  the first data row is not promoted.
+- **Hard breaks and block content in cells** flatten to `<br>`, which GFM
+  permits, so a cell can never split its own row.
+- **Nested tables** stay inside their cell as HTML, exactly once.
+- **`colspan`/`rowspan` have no GFM form**, so such tables fall back to
+  their HTML rather than silently misplacing data.
 
 ## Reading Markdown
 
