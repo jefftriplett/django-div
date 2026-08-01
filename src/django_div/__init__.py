@@ -55,7 +55,10 @@ __all__ = [
     # Generated tag classes are appended at the bottom of this module.
 ]
 
-__version__ = "0.2.0"
+# CalVer, YYYY.M.N: month and micro unpadded, micro 1-based per release
+# within the month. Adopted before anything shipped to PyPI, so no 0.x or
+# SemVer number ever appears there.
+__version__ = "2026.8.1"
 
 
 #: What an attribute name may look like, per the WHATWG HTML syntax rules:
