@@ -301,3 +301,24 @@ def test_tag_named_attribute_is_not_swallowed():
 def test_generic_tag_without_a_name_says_so():
     with pytest.raises(TypeError, match="first positional argument"):
         Tag()
+
+
+@pytest.mark.parametrize("tag", NORMAL_TAGS)
+def test_element_siblings_and_attributes_together(tag):
+    """Div(Div(), Div(), class_="md") and friends.
+
+    Children keep being positional however many there are, and attributes
+    stay keyword, so the two never compete for a slot.
+    """
+    cls = TAG_CLASSES[tag]
+    assert str(cls(cls(), cls(), class_="md")) == (
+        f'<{tag} class="md"><{tag}></{tag}><{tag}></{tag}></{tag}>'
+    )
+
+
+@pytest.mark.parametrize("tag", NORMAL_TAGS)
+def test_mixed_children_and_several_attributes(tag):
+    cls = TAG_CLASSES[tag]
+    assert str(cls(cls("a"), "tail", class_="md", id="x")) == (
+        f'<{tag} class="md" id="x"><{tag}>a</{tag}>tail</{tag}>'
+    )
