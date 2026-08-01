@@ -113,6 +113,7 @@ https://jefftriplett.github.io/django-div/django.md
 - [Building HTML](building.md) — elements, attributes, escaping, categories
 - [Parsing HTML](parsing.md) — `from_html()`, searching, editing, parsers
 - [Serializing](serializing.md) — JSON round trips
+- [Markdown](markdown.md) — render the tree as Markdown, read Markdown in
 - [Cookbook](cookbook.md) — components, scraping, sanitizing, pretty-printing
 - [Django](django.md) — components as templates, escaping interop
 - [Django cookbook](django-cookbook.md) — template tags, forms, htmx, pagination

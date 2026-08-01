@@ -39,6 +39,13 @@ html5 = [
     "beautifulsoup4>=4.12",
     "html5lib>=1.1",
 ]
+# to_markdown() needs nothing; from_markdown() renders via markdown-it-py
+# and reads the result back through parse(), so it needs that stack too.
+markdown = [
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "markdown-it-py>=3.0",
+]
 
 [dependency-groups]
 dev = [
@@ -46,6 +53,7 @@ dev = [
     "django>=5.2.16",
     "html5lib>=1.1",
     "lxml>=5.0",
+    "markdown-it-py>=3.0",
     "prek>=0.4",
     "pytest>=8.0",
     "ruff>=0.16",

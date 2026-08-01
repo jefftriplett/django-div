@@ -12,6 +12,7 @@ nav = [
   { "Building HTML" = "building.md" },
   { "Parsing HTML" = "parsing.md" },
   { "Serializing" = "serializing.md" },
+  { "Markdown" = "markdown.md" },
   { "Cookbook" = "cookbook.md" },
   { "Django" = "django.md" },
   { "Django cookbook" = "django-cookbook.md" },

@@ -104,6 +104,21 @@ payload = page.model_dump_json()
 Tag.model_validate_json(payload)   # same tree, same subclasses
 ```
 
+## Markdown
+
+The same tree renders to Markdown, so `from_html` + `to_markdown` is an
+HTML-to-Markdown converter, and `from_markdown()` reads Markdown into a tree
+(via markdown-it-py, with the `markdown` extra):
+
+```python
+from django_div.markdown import from_markdown, to_markdown
+
+to_markdown(from_html("<h1>Title</h1><p>Body</p>"))   # '# Title\n\nBody'
+from_markdown("# Title")                              # H1(...)
+```
+
+Lossy by design: attributes have no Markdown home and are dropped.
+
 ## Django
 
 Django is never imported unless it is installed, so it stays an optional
@@ -170,6 +185,7 @@ rather than one element per character.
 uv add django-div            # building only
 uv add 'django-div[parse]'   # plus from_html()/parse(), via bs4 + lxml
 uv add 'django-div[html5]'   # spec-exact parsing, ~3x slower than lxml
+uv add 'django-div[markdown]' # plus from_markdown(), via markdown-it-py
 ```
 
 Django is optional and never imported unless installed; `django_div.django`
