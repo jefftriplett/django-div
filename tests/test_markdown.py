@@ -254,3 +254,32 @@ def test_inline_markup_in_cells():
     out = to_markdown(Table(Tr(Th(Em("it"))), Tr(Td(A("x", href="/x")))))
     assert "| *it* |" in out
     assert "| [x](/x) |" in out
+
+
+# --- documented reading examples ---------------------------------------------
+
+
+def test_reading_gives_searchable_typed_trees():
+    doc = from_markdown("# Guide\n\nSee [the docs](/docs) and [the api](/api).")
+    links = [(a.text, a.attrs["href"]) for a in doc[1].find_all("a")]
+    assert links == [("the docs", "/docs"), ("the api", "/api")]
+
+
+def test_edit_markdown_structurally_and_write_it_back():
+    doc = from_markdown("# Title\n\n## Section\n\nBody.")
+    for item in doc:
+        if item.tag in ("h1", "h2"):
+            item.tag = f"h{int(item.tag[1]) + 1}"  # demote one level
+    assert to_markdown(doc) == "## Title\n\n### Section\n\nBody."
+
+
+def test_read_markdown_then_serialize():
+    doc = from_markdown("# Title")
+    assert doc.model_dump()["tag"] == "h1"
+
+
+def test_reading_fenced_code_keeps_language_and_content():
+    doc = from_markdown("```python\nif a < b:\n    go()\n```")
+    assert doc.tag == "pre"
+    assert doc.find("code").attrs["class"] == "language-python"
+    assert to_markdown(doc) == "```python\nif a < b:\n    go()\n```"

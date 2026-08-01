@@ -210,7 +210,8 @@ def _fence(pre: Tag) -> str:
                 break
         if language:
             break
-    content = source.text
+    # Parsed <code> blocks carry a trailing newline; the fence adds its own.
+    content = source.text.strip("\n")
     fence = "```"
     while fence in content:
         fence += "`"

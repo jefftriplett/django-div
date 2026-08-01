@@ -163,6 +163,18 @@ like `Search` and `Selectedcontent`.
 Tests are parametrized over `TAG_CLASSES`, so every element is checked for
 rendering, attributes, category behavior, and both round trips.
 
+## `django_div.markdown`
+
+`to_markdown(item)`
+:   Render an item or list of items as Markdown. No dependencies.
+
+`from_markdown(text, *, parser=None)`
+:   Read Markdown into a tree via markdown-it-py; needs the `markdown` extra.
+
+`INLINE_WRAPPERS` / `HEADING_TAGS` / `CONTAINER_TAGS` / `TRANSPARENT_TAGS` / `DROP_TAGS`
+:   The per-tag reference tables driving the renderer; extend them to teach
+    it new elements.
+
 ## `django_div.django`
 
 `DjangoDivTemplates`

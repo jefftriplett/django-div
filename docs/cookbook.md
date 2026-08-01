@@ -317,6 +317,77 @@ def pretty(item, indent=0):
 </div>
 ```
 
+## Markdown
+
+These need the `markdown` extra for reading; writing needs nothing. See
+[Markdown](markdown.md) for the full mapping.
+
+### One builder, two formats
+
+A tree doesn't care which renderer consumes it, so the `data_table` recipe
+above serves the page as HTML and the export as Markdown:
+
+```python
+from django_div.markdown import to_markdown
+
+table = data_table([{"name": "Ana", "age": 33}], ["name", "age"])
+str(table)          # <table>...</table>          for the page
+to_markdown(table)  # | name | age | ...          for the export
+```
+
+### Convert scraped HTML to Markdown
+
+```python
+to_markdown(from_html("<article><h1>Post</h1><p>Text with <em>emphasis</em>.</p></article>"))
+# '# Post\n\nText with *emphasis*.'
+```
+
+Feeding an LLM, archiving a page, filling a docs pipeline — one line.
+
+### Render user Markdown, hardening links on the way
+
+Comments, bios, and READMEs arrive as Markdown; the page wants HTML with
+house rules applied. Reading into a tree gives you an editing step between
+the two:
+
+```python
+from django_div.markdown import from_markdown
+
+def render_user_markdown(text):
+    items = from_markdown(text)
+    items = items if isinstance(items, list) else [items]
+    for item in items:
+        if not isinstance(item, Tag):
+            continue
+        for link in item.find_all("a"):
+            href = link.attrs.get("href", "")
+            if href.startswith(("http://", "https://")):
+                link.attrs["rel"] = "noopener"
+                link.attrs["target"] = "_blank"
+    return "".join(str(item) for item in items)
+```
+
+```python
+render_user_markdown("[in](/x) and [out](https://ex.test)")
+# <p><a href="/x">in</a> and
+#    <a href="https://ex.test" rel="noopener" target="_blank">out</a></p>
+```
+
+### Outline a Markdown document
+
+```python
+def outline(markdown_text):
+    items = from_markdown(markdown_text)
+    items = items if isinstance(items, list) else [items]
+    return [
+        (int(item.tag[1]), item.text)
+        for item in items
+        if isinstance(item, Tag) and item.tag in {"h1", "h2", "h3", "h4", "h5", "h6"}
+    ]
+
+outline("# A\n\ntext\n\n## B\n\n### C")   # [(1, 'A'), (2, 'B'), (3, 'C')]
+```
+
 ## Serializing
 
 ### Cache a parsed page
