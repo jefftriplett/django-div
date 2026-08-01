@@ -503,3 +503,31 @@ def test_doctype_survives_json_round_trip():
     from django_div import ITEM_CLASSES
 
     assert isinstance(ITEM_CLASSES["doctype"](**dumped), Doctype)
+
+
+# --- version ----------------------------------------------------------------
+
+
+def test_version_is_calver():
+    """YYYY.M.N: month and micro unpadded, micro 1-based within the month."""
+    import re
+
+    import django_div
+
+    assert re.fullmatch(r"20\d\d\.([1-9]|1[0-2])\.[1-9]\d*", django_div.__version__)
+
+
+def test_version_matches_pyproject():
+    """The version lives in two places until it is single-sourced (#2)."""
+    import pathlib
+
+    import django_div
+
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # Python 3.10
+        import tomli as tomllib
+
+    pyproject = pathlib.Path(__file__).parent.parent / "pyproject.toml"
+    project = tomllib.loads(pyproject.read_text())["project"]
+    assert project["version"] == django_div.__version__

@@ -1,6 +1,6 @@
 [project]
 name = "django-div"
-version = "0.2.0"
+version = "2026.8.1"
 description = "Build and parse HTML in Python with Pydantic models"
 readme = "README.md"
 authors = [
