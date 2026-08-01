@@ -149,10 +149,10 @@ closed early and parse the remainder as live markup.
 | `TAG_CLASSES` | Tag name to class, including ones registered at runtime |
 | `BUILTIN_TAGS` | The element names this library ships |
 | `ITEM_CLASSES` | Discriminator to leaf class |
-| `VOID_TAGS` | Elements that self-close |
-| `RAW_TEXT_TAGS` | `script`, `style` |
-| `PRE_TAGS` | `pre`, `textarea` |
-| `DOCUMENT_TAGS` | `html`, `head`, `body` |
+| `VOID_ELEMENTS` | Elements that self-close |
+| `RAW_TEXT_ELEMENTS` | `script`, `style` |
+| `PRE_ELEMENTS` | `pre`, `textarea` |
+| `DOCUMENT_ELEMENTS` | `html`, `head`, `body` |
 | `ATTR_OVERRIDES` | Irregular attribute spellings |
 | `ATTR_NAME_RE` | What a rendered attribute name may look like |
 | `PARSERS` | Parser preference order |

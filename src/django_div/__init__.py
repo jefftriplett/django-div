@@ -32,13 +32,13 @@ __all__ = [
     "ATTR_NAME_RE",
     "ATTR_OVERRIDES",
     "BUILTIN_TAGS",
-    "DOCUMENT_TAGS",
+    "DOCUMENT_ELEMENTS",
     "ITEM_CLASSES",
     "PARSERS",
-    "PRE_TAGS",
-    "RAW_TEXT_TAGS",
+    "PRE_ELEMENTS",
+    "RAW_TEXT_ELEMENTS",
     "TAG_CLASSES",
-    "VOID_TAGS",
+    "VOID_ELEMENTS",
     "Comment",
     "HtmlItem",
     "Raw",
@@ -77,7 +77,7 @@ ATTR_OVERRIDES = {
 }
 
 #: Wrappers a parser may invent around a fragment.
-DOCUMENT_TAGS = frozenset({"body", "head", "html"})
+DOCUMENT_ELEMENTS = frozenset({"body", "head", "html"})
 
 #: Keys Pydantic passes back when it re-validates a serialized Tag.
 FIELD_KEYS = frozenset({"attrs", "children", "tag", "type"})
@@ -91,17 +91,17 @@ ITEM_CLASSES: dict[str, type[HtmlItem]] = {}
 PARSERS = ("lxml", "html5lib", "html.parser")
 
 #: Elements whose text content is significant, so parsing keeps it verbatim.
-PRE_TAGS = frozenset({"pre", "textarea"})
+PRE_ELEMENTS = frozenset({"pre", "textarea"})
 
 #: Elements whose content is raw text, never HTML-escaped on render. Escaping
 #: these would corrupt them: ``if (a < b)`` is not ``if (a &lt; b)``.
-RAW_TEXT_TAGS = frozenset({"script", "style"})
+RAW_TEXT_ELEMENTS = frozenset({"script", "style"})
 
 #: Tag name -> generated class, for rebuilding a typed tree from a dump.
 TAG_CLASSES: dict[str, type[Tag]] = {}
 
 #: HTML elements that never have children and render self-closed.
-VOID_TAGS = frozenset(
+VOID_ELEMENTS = frozenset(
     {
         "area",
         "base",
@@ -312,7 +312,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
         """
         unwrapped = []
         for item in items:
-            if isinstance(item, Tag) and item.tag in DOCUMENT_TAGS:
+            if isinstance(item, Tag) and item.tag in DOCUMENT_ELEMENTS:
                 unwrapped.extend(unwrap_implicit(item.children))
             else:
                 unwrapped.append(item)
@@ -323,7 +323,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     while pending:
         soup_node, item = pending.pop()
         item.children = convert_children(
-            soup_node.contents, verbatim=soup_node.name in PRE_TAGS
+            soup_node.contents, verbatim=soup_node.name in PRE_ELEMENTS
         )
     if re.search(r"<\s*(html|head|body)\b", html, re.IGNORECASE):
         return roots
@@ -492,7 +492,7 @@ class Tag(HtmlItem):
                 "as in Tag('div', ...)"
             )
         items = list(iter_children(children))
-        if items and _tag in VOID_TAGS:
+        if items and _tag in VOID_ELEMENTS:
             # Rendering would drop them silently, which hides the mistake.
             raise ValueError(f"<{_tag}> is a void element and cannot have children")
         super().__init__(
@@ -503,11 +503,11 @@ class Tag(HtmlItem):
 
     @property
     def is_raw_text(self) -> bool:
-        return self.tag in RAW_TEXT_TAGS
+        return self.tag in RAW_TEXT_ELEMENTS
 
     @property
     def is_void(self) -> bool:
-        return self.tag in VOID_TAGS
+        return self.tag in VOID_ELEMENTS
 
     @property
     def text(self) -> str:

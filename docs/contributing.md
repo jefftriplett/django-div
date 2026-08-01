@@ -69,7 +69,7 @@ the HTML living standard in both directions, so a missing or invented element
 fails.
 
 Adding an element means adding it to `_TAGS`. If it belongs to a category,
-add it to `VOID_TAGS`, `RAW_TEXT_TAGS`, or `PRE_TAGS` as well — the tests
+add it to `VOID_ELEMENTS`, `RAW_TEXT_ELEMENTS`, or `PRE_ELEMENTS` as well — the tests
 will tell you.
 
 Deprecation warnings are errors:
