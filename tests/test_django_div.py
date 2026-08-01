@@ -442,3 +442,53 @@ def test_comment_edge_content_survives_json_round_trip():
     restored = Tag.model_validate_json(tree.model_dump_json())
     assert str(restored) == str(tree)
     assert restored.children[0].content == ">--x-", "content stored verbatim"
+
+
+# --- doctypes ----------------------------------------------------------------
+
+
+def test_doctype_defaults_to_html5():
+    from django_div import Doctype
+
+    assert str(Doctype()) == "<!DOCTYPE html>"
+
+
+def test_doctype_carries_legacy_identifiers():
+    from django_div import Doctype
+
+    legacy = 'html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"'
+    assert str(Doctype(content=legacy)) == f"<!DOCTYPE {legacy}>"
+
+
+def test_doctype_refuses_early_close():
+    from django_div import Doctype
+
+    with pytest.raises(ValueError, match="end the declaration"):
+        str(Doctype(content="html><script>alert(1)</script>"))
+
+
+def test_doctype_parses_as_doctype():
+    from django_div import Doctype
+
+    items = parse("<!DOCTYPE html><p>hi</p>")
+    assert isinstance(items[0], Doctype)
+    assert items[0].content == "html"
+
+
+def test_full_document_round_trips():
+    html = (
+        "<!DOCTYPE html><html><head><title>T</title></head>"
+        "<body><p>hi</p></body></html>"
+    )
+    assert "".join(str(item) for item in parse(html)) == html
+
+
+def test_doctype_survives_json_round_trip():
+    from django_div import Doctype, HtmlItem
+
+    restored = HtmlItem  # noqa: F841 - imported for clarity below
+    dumped = Doctype().model_dump()
+    assert dumped == {"type": "doctype", "content": "html"}
+    from django_div import ITEM_CLASSES
+
+    assert isinstance(ITEM_CLASSES["doctype"](**dumped), Doctype)

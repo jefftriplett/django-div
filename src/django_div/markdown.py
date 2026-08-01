@@ -25,6 +25,7 @@ from typing import Any
 
 from django_div import (
     Comment,
+    Doctype,
     HtmlItem,
     Raw,
     Tag,
@@ -155,6 +156,8 @@ def to_markdown(item: HtmlItem | list[HtmlItem]) -> str:
 
 def _block(item: HtmlItem) -> str:
     """Render one block-level item; "" means it contributes nothing."""
+    if isinstance(item, Doctype):
+        return ""  # a doctype has no meaning in a Markdown document
     if isinstance(item, Text):
         return item.content.strip()
     if isinstance(item, Raw):

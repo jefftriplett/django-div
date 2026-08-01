@@ -5,11 +5,11 @@ from django_div import (
     H2,
     Body,
     Div,
+    Doctype,
     Head,
     Html,
     Li,
     Meta,
-    Raw,
     Tag,
     Title,
     Ul,
@@ -152,7 +152,7 @@ def page(markdown_text, *, title):
     return "".join(
         str(part)
         for part in [
-            Raw(content="<!DOCTYPE html>"),
+            Doctype(),
             Html(
                 Head(Meta(charset="utf-8"), Title(title)),
                 Body(Div(items, class_="content")),

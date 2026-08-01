@@ -40,6 +40,7 @@ __all__ = [
     "TAG_CLASSES",
     "VOID_ELEMENTS",
     "Comment",
+    "Doctype",
     "HtmlItem",
     "Raw",
     "Tag",
@@ -256,7 +257,8 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     try:
         from bs4 import BeautifulSoup
         from bs4.element import Comment as SoupComment
-        from bs4.element import Doctype, NavigableString
+        from bs4.element import Doctype as SoupDoctype
+        from bs4.element import NavigableString
         from bs4.element import Tag as SoupTag
     except ImportError as exc:  # pragma: no cover - depends on install extras
         raise ImportError("parse() requires beautifulsoup4") from exc
@@ -266,8 +268,8 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     pending: list[tuple[Any, Tag]] = []
 
     def convert(node: Any) -> HtmlItem | None:
-        if isinstance(node, Doctype):
-            return Raw(content=f"<!DOCTYPE {node}>")
+        if isinstance(node, SoupDoctype):
+            return Doctype(content=str(node))
         if isinstance(node, SoupComment):
             return Comment(content=str(node))
         if isinstance(node, NavigableString):
@@ -299,7 +301,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
 
     def is_blank_text(node: Any) -> bool:
         is_plain_string = isinstance(node, NavigableString) and not isinstance(
-            node, (SoupComment, Doctype)
+            node, (SoupComment, SoupDoctype)
         )
         return is_plain_string and not str(node).strip()
 
@@ -440,6 +442,26 @@ class Comment(HtmlItem):
         if content.endswith("-"):
             content += " "
         return marker()(f"<!--{content}-->")
+
+
+class Doctype(HtmlItem):
+    """A document type declaration. Defaults to the HTML5 doctype.
+
+    ``content`` is what follows ``<!DOCTYPE`` — ``html`` for every modern
+    document, or a legacy public/system identifier string when parsing old
+    markup. A ``>`` in the content would end the declaration early and leak
+    the rest into the document, so rendering refuses it.
+    """
+
+    type: Literal["doctype"] = "doctype"
+    content: str = "html"
+
+    def __str__(self) -> str:
+        if ">" in self.content:
+            raise ValueError(
+                "doctype content cannot contain '>'; it would end the declaration"
+            )
+        return marker()(f"<!DOCTYPE {self.content}>")
 
 
 class Raw(HtmlItem):
@@ -641,7 +663,9 @@ class Text(HtmlItem):
         return marker()(escape(self.content))
 
 
-ITEM_CLASSES.update({"comment": Comment, "raw": Raw, "tag": Tag, "text": Text})
+ITEM_CLASSES.update(
+    {"comment": Comment, "doctype": Doctype, "raw": Raw, "tag": Tag, "text": Text}
+)
 
 # Generated element classes. Names are capitalized to stay clear of builtins
 # like `input`, `object`, and `map`.

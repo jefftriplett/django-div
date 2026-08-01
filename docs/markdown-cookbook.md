@@ -100,7 +100,7 @@ def page(markdown_text, *, title):
     items = from_markdown(markdown_text)
     items = items if isinstance(items, list) else [items]
     return "".join(str(part) for part in [
-        Raw(content="<!DOCTYPE html>"),
+        Doctype(),
         Html(
             Head(Meta(charset="utf-8"), Title(title)),
             Body(Div(items, class_="content")),

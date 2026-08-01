@@ -283,3 +283,9 @@ def test_reading_fenced_code_keeps_language_and_content():
     assert doc.tag == "pre"
     assert doc.find("code").attrs["class"] == "language-python"
     assert to_markdown(doc) == "```python\nif a < b:\n    go()\n```"
+
+
+def test_doctype_is_dropped_in_markdown():
+    from django_div import Doctype
+
+    assert to_markdown([Doctype(), H1("Title")]) == "# Title"

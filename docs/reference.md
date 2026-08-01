@@ -30,7 +30,7 @@ Tests enforce both halves across every element class, so this stays true.
 
 ## Items
 
-All four item types inherit from `HtmlItem`.
+All five item types inherit from `HtmlItem`.
 
 ### `Tag`
 
@@ -104,6 +104,12 @@ Unescaped markup. `Raw(content="<b>x</b>")` renders as-is.
 !!! danger
 
     Never build a `Raw` from untrusted input.
+
+### `Doctype`
+
+`Doctype()` renders `<!DOCTYPE html>`; `content` overrides what follows
+`<!DOCTYPE`, for legacy identifiers. A `>` in the content would end the
+declaration early, so rendering refuses it.
 
 ### `Comment`
 

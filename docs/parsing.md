@@ -118,13 +118,16 @@ Inside `pre` and `textarea`, whitespace is significant and kept verbatim.
 
 ## Comments and doctypes
 
-Comments survive as `Comment` items and doctypes as `Raw`, so a whole
-document round-trips:
+Comments survive as `Comment` items and doctypes as `Doctype` items, so a
+whole document round-trips:
 
 ```python
 parse("<!DOCTYPE html><!--note--><p>hi</p>")
-# [Raw(...), Comment(...), P(...)]
+# [Doctype(...), Comment(...), P(...)]
 ```
+
+`Doctype.content` is what follows `<!DOCTYPE` — `"html"` for modern
+documents, or the full legacy identifier string when parsing old markup.
 
 ## Limits
 
