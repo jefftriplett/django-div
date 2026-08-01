@@ -8,6 +8,12 @@ use Zensical syntax that means nothing outside the renderer: admonitions
 (``!!! note``), grid cards, and content tabs would all reach a reader as raw
 markers. Rendering first turns them into prose.
 
+The HTML-to-Markdown conversion itself is ``django_div.markdown.to_markdown``
+over a ``parse()`` tree — the library run on its own docs, so a conversion
+regression breaks this site's build before it reaches anyone else. This
+script only selects the ``<article>``, prunes page furniture, and assembles
+the llms.txt files.
+
 Page order, titles, and URLs come from zensical.toml, so adding a page to the
 nav is the only step needed.
 
@@ -20,13 +26,14 @@ import os
 import pathlib
 import re
 import sys
-from html.parser import HTMLParser
-from typing import ClassVar
 
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - Python 3.10
     import tomli as tomllib
+
+from django_div import Tag, parse
+from django_div.markdown import to_markdown
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SKIP = {"404"}
@@ -57,194 +64,57 @@ def nav_order(project: dict) -> list[str]:
     return walk(project.get("nav", []))
 
 
-class Extractor(HTMLParser):
-    """Pull the <article> body out of a rendered page and re-emit Markdown."""
+def article_of(items: list) -> Tag | None:
+    """The <article> element of a rendered page: the content without chrome."""
+    for item in items:
+        if isinstance(item, Tag):
+            if item.tag == "article":
+                return item
+            found = item.find("article")
+            if found is not None:
+                return found
+    return None
 
-    BLOCK: ClassVar[set[str]] = {
-        "p",
-        "div",
-        "section",
-        "article",
-        "ul",
-        "ol",
-        "table",
-        "tr",
-        "br",
-    }
-    HEADING: ClassVar[dict[str, int]] = {f"h{n}": n for n in range(1, 7)}
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.depth = 0  # >0 once inside <article>
-        self.parts: list[str] = []
-        self.title: str | None = None
-        self._skip = 0  # inside nav/script/style
-        self._pre = 0
-        self._heading: int | None = None
-        self._buf: list[str] = []
-        self._code: list[str] = []
-        self._lang = ""
-        self._href: list[str] = []
-        self.code: list[tuple[str, str]] = []
-        self._table = 0
-        self._rows: list[list[str]] = []
-        self._row: list[str] | None = None
-        self._cell: list[str] | None = None
+def prune(tag: Tag) -> None:
+    """Strip page furniture the Markdown twin should not carry.
 
-    def handle_starttag(self, tag, attrs):
-        a = dict(attrs)
-        if tag in ("script", "style", "nav"):
-            self._skip += 1
-            return
-        # Skip permalink anchors and heading self-links.
-        if tag == "a" and "headerlink" in (a.get("class") or ""):
-            self._skip += 1
-            return
-        if tag == "article":
-            self.depth += 1
-            return
-        if not self.depth or self._skip:
-            return
-        # Tables are collected cell by cell and re-emitted as Markdown at
-        # </table>. Flowing them through as text loses the column boundaries.
-        if tag == "table":
-            self._table += 1
-            self._rows = []
-            return
-        if self._table:
-            if tag == "tr":
-                self._row = []
-            elif tag in ("th", "td"):
-                self._cell = []
-            return
-        if tag == "pre":
-            self._pre += 1
-            self._code = []
-        elif tag == "div" and "language-" in (a.get("class") or ""):
-            # Zensical wraps highlighted blocks in
-            # <div class="language-python highlight">; the language is only there.
-            m = re.search(r"language-(\w+)", a["class"])
-            self._lang = m.group(1) if m else ""
-            self.parts.append("\n")
-        elif tag == "a" and not self._pre:
-            href = a.get("href") or ""
-            self._href.append(href)
-            if href:
-                self.parts.append("[")
-        elif tag in self.HEADING:
-            self._heading = self.HEADING[tag]
-            self._buf = []
-        elif tag == "dt":
-            self.parts.append("\n\n")
-        elif tag == "dd":
-            # Markdown definition-list syntax, so a term stays attached to
-            # its description instead of running into the next term.
-            self.parts.append("\n:   ")
-        elif tag in self.BLOCK:
-            self.parts.append("\n")
-        elif tag == "li":
-            self.parts.append("\n- ")
+    In-page <nav> and the ¶ permalink anchors are navigation, not content,
+    and inline <svg> is decoration (twemoji icons) that would reach a reader
+    as a screenful of path data. Zensical puts the language of a highlighted
+    block only on its wrapper
+    (``<div class="language-python highlight">``), so that class is pushed
+    down onto the <pre>, where to_markdown()'s fence renderer looks for it.
+    """
+    kept = []
+    for child in tag.children:
+        if isinstance(child, Tag):
+            if child.tag in ("nav", "svg"):
+                continue
+            if child.tag == "a" and "headerlink" in str(child.attrs.get("class", "")):
+                continue
+            if child.tag == "div" and "language-" in str(child.attrs.get("class", "")):
+                pre = child.find("pre")
+                if pre is not None:
+                    pre.attrs.setdefault("class", child.attrs["class"])
+            prune(child)
+        kept.append(child)
+    tag.children = kept
 
-    def handle_endtag(self, tag):
-        if tag in ("script", "style", "nav"):
-            self._skip = max(0, self._skip - 1)
-            return
-        if tag == "a" and self._skip:
-            self._skip = max(0, self._skip - 1)
-            return
-        if tag == "a" and self.depth and not self._pre and self._href:
-            href = self._href.pop()
-            if href:
-                self.parts.append(f"]({href})")
-            return
-        if tag == "article":
-            self.depth = max(0, self.depth - 1)
-            return
-        if not self.depth or self._skip:
-            return
-        if tag == "table" and self._table:
-            self._table -= 1
-            if self._rows:
-                self.parts.append(f"\n\n{self._render_table(self._rows)}\n\n")
-            self._rows = []
-            return
-        if self._table:
-            if tag in ("th", "td") and self._cell is not None:
-                self._row = self._row if self._row is not None else []
-                self._row.append(" ".join("".join(self._cell).split()))
-                self._cell = None
-            elif tag == "tr" and self._row is not None:
-                self._rows.append(self._row)
-                self._row = None
-            return
-        if tag == "dt":
-            # No newline: the ":" line that follows must stay attached to the
-            # term, or it stops being a definition list.
-            return
-        if tag == "dd":
-            self.parts.append("\n")
-            return
-        if tag == "pre":
-            self._pre = max(0, self._pre - 1)
-            # Stash verbatim; whitespace normalisation below must not touch it,
-            # or Python indentation in every example is destroyed.
-            self.code.append((self._lang, "".join(self._code).strip("\n")))
-            self.parts.append(f"\n\n\x00{len(self.code) - 1}\x00\n\n")
-            self._code = []
-        elif tag in self.HEADING and self._heading:
-            text = re.sub(r"\s+", " ", "".join(self._buf)).strip()
-            if text:
-                if self.title is None and self._heading == 1:
-                    self.title = text
-                self.parts.append(f"\n\n{'#' * self._heading} {text}\n\n")
-            self._heading = None
-            self._buf = []
 
-    def handle_data(self, data):
-        if not self.depth or self._skip:
-            return
-        if self._table:
-            if self._cell is not None:
-                self._cell.append(data)
-            return
-        if self._heading:
-            self._buf.append(data)
-        elif self._pre:
-            self._code.append(data)
-        else:
-            self.parts.append(re.sub(r"[ \t]*\n[ \t]*", " ", data))
+def convert(html: str) -> tuple[str | None, str]:
+    """One rendered page as (title, markdown).
 
-    @staticmethod
-    def _fence(lang: str, code: str) -> str:
-        return f"```{lang}\n{code}\n```"
-
-    @staticmethod
-    def _render_table(rows: list[list[str]]) -> str:
-        """Rows to a Markdown table, first row treated as the header."""
-        width = max(len(row) for row in rows)
-        padded = [
-            [cell.replace("|", r"\|") for cell in row] + [""] * (width - len(row))
-            for row in rows
-        ]
-        lines = [
-            "| " + " | ".join(padded[0]) + " |",
-            "| " + " | ".join(["---"] * width) + " |",
-        ]
-        lines += ["| " + " | ".join(row) + " |" for row in padded[1:]]
-        return "\n".join(lines)
-
-    def markdown(self) -> str:
-        text = "".join(self.parts)
-        text = re.sub(r"[ \t]{2,}", " ", text)
-        # Strip trailing whitespace per line first, so blank-line collapsing
-        # below sees genuinely empty lines rather than lines of spaces.
-        text = "\n".join(line.rstrip() for line in text.split("\n"))
-        text = re.sub(r"\n{3,}", "\n\n", text)
-        # Restore code blocks after normalisation, fenced.
-        text = re.sub(
-            r"\x00(\d+)\x00", lambda m: self._fence(*self.code[int(m.group(1))]), text
-        )
-        return text.strip() + "\n"
+    The title is the first <h1>, and the body is everything inside
+    <article>. A page without an article converts to nothing.
+    """
+    article = article_of(parse(html))
+    if article is None:
+        return None, ""
+    prune(article)
+    heading = article.find("h1")
+    title = re.sub(r"\s+", " ", heading.text).strip() if heading else None
+    return title, to_markdown(article).strip() + "\n"
 
 
 def slug_of(page: pathlib.Path, site: pathlib.Path) -> str:
@@ -259,9 +129,8 @@ def extract(site: pathlib.Path) -> dict[str, tuple[str, str]]:
         slug = slug_of(html_file, site)
         if slug in SKIP:
             continue
-        parser = Extractor()
-        parser.feed(html_file.read_text(encoding="utf-8"))
-        pages[slug] = (parser.title or slug, parser.markdown())
+        title, body = convert(html_file.read_text(encoding="utf-8"))
+        pages[slug] = (title or slug, body)
     return pages
 
 

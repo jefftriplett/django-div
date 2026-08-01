@@ -94,8 +94,13 @@ plugin API yet, so it is a post-build step rather than a plugin.
 It reads the **rendered HTML**, not `docs/*.md`. The docs use Zensical syntax
 that means nothing outside the renderer — admonitions, grid cards, content
 tabs — and a reader of the source would get raw `!!!` markers. Rendering first
-turns them into prose, and tables and definition lists are rebuilt as proper
-Markdown on the way out.
+turns them into prose.
+
+The conversion itself is the library's own: each page goes through
+`from_html()`-style parsing and `django_div.markdown.to_markdown()`, so every
+docs build exercises both on real pages. The script only selects the
+`<article>`, prunes navigation, permalink anchors, and icon SVGs, and
+assembles `llms.txt`.
 
 Page order comes from the `nav` in `zensical.toml`. A page missing from the
 nav is appended alphabetically rather than dropped.

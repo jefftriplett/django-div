@@ -266,6 +266,17 @@ def test_pre_preserves_whitespace_between_children():
     assert str(from_html(html)) == html
 
 
+def test_pre_preserves_whitespace_inside_nested_spans():
+    """Verbatim is inherited by the whole <pre> subtree.
+
+    Syntax highlighters wrap each code line in a <span>; the newlines live
+    between and inside those spans, not as direct <pre> children, and used
+    to be collapsed like ordinary inter-tag whitespace.
+    """
+    html = "<pre><code><span>line1</span>\n<span>  line2</span>\n</code></pre>"
+    assert str(from_html(html)) == html
+
+
 def test_textarea_preserves_whitespace():
     html = "<textarea>  keep  </textarea>"
     assert str(from_html(html)) == html
