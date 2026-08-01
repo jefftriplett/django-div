@@ -86,6 +86,37 @@ for link in page.find_all("a", target="_blank"):
 print(page)
 ```
 
+## llms.txt
+
+This documentation is available in the [llms.txt](https://llmstxt.org/)
+format, a Markdown convention suited to LLMs and AI coding assistants.
+
+Two files are published:
+
+- [`llms.txt`](https://jefftriplett.github.io/django-div/llms.txt): a short
+  description of the project plus links to each section. The structure is
+  described [here](https://llmstxt.org/#format).
+- [`llms-full.txt`](https://jefftriplett.github.io/django-div/llms-full.txt):
+  the same index with the content of every page inlined.
+
+Every page is also published as Markdown alongside its HTML, so you can point
+an assistant at a single section rather than the whole corpus. Append `.md` to
+the page name:
+
+```
+https://jefftriplett.github.io/django-div/building.md
+https://jefftriplett.github.io/django-div/django.md
+```
+
+## Where to next
+
+- [Building HTML](building.md) — elements, attributes, escaping, categories
+- [Parsing HTML](parsing.md) — `from_html()`, searching, editing, parsers
+- [Serializing](serializing.md) — JSON round trips
+- [Django](django.md) — components as templates, escaping interop
+- [API reference](reference.md) — every function, class, and constant
+- [Contributing](contributing.md) — setup, conventions, tests
+
 ## Where it came from
 
 django-div started as five throwaway scripts trying to answer one question:

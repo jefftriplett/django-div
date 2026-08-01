@@ -26,6 +26,9 @@ jobs:
         with:
           enable-cache: true
       - run: uv run zensical build --clean --strict
+      # Zensical has no plugin API yet, so llms.txt, llms-full.txt and the
+      # per-page .md twins are generated from the rendered output here.
+      - run: uv run python scripts/gen_llms.py site
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site

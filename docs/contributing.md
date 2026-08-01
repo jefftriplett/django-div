@@ -20,7 +20,7 @@ group: pytest, ruff, prek, Django, and both parser backends.
 | `just lint` | Run every hook over every file |
 | `just ruff` | Just ruff, check and format |
 | `just docs` | Serve the docs with live reload |
-| `just docs-build` | Build the docs into `site/` |
+| `just docs-build` | Build the docs into `site/`, plus llms.txt |
 | `just example` | Run `examples/example.py` |
 | `just install-hooks` | Install the prek git hooks |
 | `just update-hooks` | Update pinned hook versions |
@@ -80,6 +80,21 @@ filterwarnings = ["error::DeprecationWarning"]
 
 So a Pydantic or Django deprecation fails the suite rather than scrolling
 past.
+
+## llms.txt
+
+`scripts/gen_llms.py` runs after `zensical build` and writes `llms.txt`,
+`llms-full.txt`, and a Markdown twin next to every page. Zensical has no
+plugin API yet, so it is a post-build step rather than a plugin.
+
+It reads the **rendered HTML**, not `docs/*.md`. The docs use Zensical syntax
+that means nothing outside the renderer — admonitions, grid cards, content
+tabs — and a reader of the source would get raw `!!!` markers. Rendering first
+turns them into prose, and tables and definition lists are rebuilt as proper
+Markdown on the way out.
+
+Page order comes from the `nav` in `zensical.toml`. A page missing from the
+nav is appended alphabetically rather than dropped.
 
 ## CI
 

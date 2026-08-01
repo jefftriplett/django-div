@@ -9,6 +9,7 @@
 
 @docs-build:
 	uv run zensical build --clean --strict
+	uv run python scripts/gen_llms.py site
 
 @example:
 	uv run --with rich --with typer python examples/example.py
