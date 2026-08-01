@@ -1,0 +1,7 @@
+bs4
+prek
+pydantic>=2.13
+pytest
+rich
+ruff
+typer
