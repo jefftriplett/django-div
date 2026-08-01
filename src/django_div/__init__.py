@@ -29,6 +29,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, BeforeValidator, Field, SerializeAsAny
 
 __all__ = [
+    "ATTR_NAME_RE",
     "ATTR_OVERRIDES",
     "BUILTIN_TAGS",
     "DOCUMENT_TAGS",
@@ -55,6 +56,12 @@ __all__ = [
 
 __version__ = "0.1.0"
 
+
+#: What an attribute name may look like, per the WHATWG HTML syntax rules:
+#: no whitespace, quotes, ``>``, ``/``, ``=``, or control characters. Values
+#: are escaped on render; names cannot be, so a name that fails this pattern
+#: could smuggle a second attribute into the output and must be refused.
+ATTR_NAME_RE = re.compile(r'^[^\s"\'>/=\x00-\x1f\x7f]+$')
 
 #: Attribute names whose Python spelling can't be derived by the normal rules.
 ATTR_OVERRIDES = {
@@ -130,8 +137,13 @@ def marker() -> Callable[[str], str]:
     return mark_safe
 
 
+@cache
 def best_parser() -> str:
-    """The best BeautifulSoup backend installed, preferring correctness."""
+    """The best BeautifulSoup backend installed, preferring correctness.
+
+    Cached: the answer cannot change within a process, and find_spec is too
+    slow to pay on every parse() call.
+    """
     from importlib.util import find_spec
 
     for parser in PARSERS:
@@ -249,6 +261,10 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     except ImportError as exc:  # pragma: no cover - depends on install extras
         raise ImportError("parse() requires beautifulsoup4") from exc
 
+    # Elements are converted shallow and their children attached from this
+    # queue afterwards, so document depth is not bounded by the Python stack.
+    pending: list[tuple[Any, Tag]] = []
+
     def convert(node: Any) -> HtmlItem | None:
         if isinstance(node, Doctype):
             return Raw(content=f"<!DOCTYPE {node}>")
@@ -263,9 +279,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
             }
             cls = TAG_CLASSES.get(node.name)
             item = cls(**attrs) if cls else Tag(node.name, **attrs)
-            item.children = convert_children(
-                node.contents, verbatim=node.name in PRE_TAGS
-            )
+            pending.append((node, item))
             return item
         return None
 
@@ -306,6 +320,11 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
 
     soup = BeautifulSoup(html, parser or best_parser())
     roots = convert_children(soup.contents)
+    while pending:
+        soup_node, item = pending.pop()
+        item.children = convert_children(
+            soup_node.contents, verbatim=soup_node.name in PRE_TAGS
+        )
     if re.search(r"<\s*(html|head|body)\b", html, re.IGNORECASE):
         return roots
     return unwrap_implicit(roots)
@@ -318,6 +337,10 @@ def render_attrs(attrs: dict[str, Any]) -> str:
         if value is False or value is None:
             continue
         name = normalize_attr(raw_name)
+        if not ATTR_NAME_RE.match(name):
+            # Values are escaped below; names cannot be, so a quote or space
+            # here would inject a second attribute into the rendered output.
+            raise ValueError(f"invalid attribute name: {name!r}")
         if value is True:
             parts.append(name)
             continue
@@ -445,10 +468,13 @@ class Tag(HtmlItem):
         # caller names is an attribute. That frees every possible attribute
         # name, including "tag", and makes the rule enforced by the signature
         # rather than by convention.
-        if is_field_payload(children, attrs=attrs):
-            super().__init__(**attrs)
-            return
         if _tag is None:
+            # Pydantic re-validation reaches here with fields as keywords;
+            # a caller who passed an element name is always building markup,
+            # even if the attributes happen to be named "tag" and "attrs".
+            if is_field_payload(children, attrs=attrs):
+                super().__init__(**attrs)
+                return
             raise TypeError(
                 "Tag() needs an element name as its first positional argument, "
                 "as in Tag('div', ...)"
@@ -474,11 +500,7 @@ class Tag(HtmlItem):
     @property
     def text(self) -> str:
         """All text in this subtree, unescaped."""
-        return "".join(
-            child.content if isinstance(child, Text) else child.text
-            for child in self.children
-            if isinstance(child, (Text, Tag))
-        )
+        return "".join(item.content for item in self.walk() if isinstance(item, Text))
 
     @classmethod
     def model_validate(cls, obj: Any, **kwargs: Any) -> Tag:
@@ -502,8 +524,11 @@ class Tag(HtmlItem):
         return super().model_validate_json(json_data, **kwargs)
 
     def find(self, tag: str | None = None, **attrs: Any) -> Tag | None:
-        """The first descendant tag matching, or None."""
-        return next(iter(self.find_all(tag, **attrs)), None)
+        """The first descendant tag matching, or None.
+
+        Stops at the first hit rather than walking the whole tree.
+        """
+        return next(self.iter_find(tag, **attrs), None)
 
     def find_all(self, tag: str | None = None, **attrs: Any) -> list[Tag]:
         """Every descendant tag matching a name and/or attributes.
@@ -512,40 +537,68 @@ class Tag(HtmlItem):
 
             doc.find_all("a", class_="external")
         """
+        return list(self.iter_find(tag, **attrs))
+
+    def iter_find(self, tag: str | None = None, **attrs: Any) -> Iterator[Tag]:
+        """find_all() as a lazy iterator."""
         wanted = {normalize_attr(key): value for key, value in attrs.items()}
-        return [
-            item
-            for item in self.walk()
-            if isinstance(item, Tag)
-            and item is not self
-            and (tag is None or item.tag == tag)
-            and all(item.attrs.get(key) == value for key, value in wanted.items())
-        ]
+        for item in self.walk():
+            if (
+                isinstance(item, Tag)
+                and item is not self
+                and (tag is None or item.tag == tag)
+                and all(item.attrs.get(key) == value for key, value in wanted.items())
+            ):
+                yield item
 
     def walk(self) -> Iterator[HtmlItem]:
-        """Yield this item, then every descendant, depth first."""
-        yield self
-        for child in self.children:
-            if isinstance(child, Tag):
-                yield from child.walk()
-            else:
-                yield child
+        """Yield this item, then every descendant, depth first.
+
+        Iterative, so tree depth is not bounded by the Python stack.
+        """
+        stack: list[HtmlItem] = [self]
+        while stack:
+            item = stack.pop()
+            yield item
+            if isinstance(item, Tag):
+                stack.extend(reversed(item.children))
 
     def __call__(self, *children: Any) -> Tag:
         """Return a copy with more children, for building in stages."""
         clone = self.model_copy()
+        # model_copy is shallow: without these, the clone would share the
+        # original's containers, and mutating one would mutate the other.
+        clone.attrs = dict(self.attrs)
         clone.children = [*self.children, *iter_children(children)]
         return clone
 
     def __str__(self) -> str:
-        attrs = render_attrs(self.attrs)
-        if self.is_void:
-            return marker()(f"<{self.tag}{attrs} />")
-        if self.is_raw_text:
-            children = self.render_raw_text()
-        else:
-            children = "".join(str(child) for child in self.children)
-        return marker()(f"<{self.tag}{attrs}>{children}</{self.tag}>")
+        # An explicit stack rather than recursion, so rendering neither
+        # overflows on deep trees nor rebuilds every subtree string at every
+        # level. Entries are either items to render or already-final strings
+        # (closing tags).
+        parts: list[str] = []
+        stack: list[Any] = [self]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, str):
+                parts.append(node)
+            elif isinstance(node, Tag) and type(node).__str__ is Tag.__str__:
+                attrs = render_attrs(node.attrs)
+                if node.is_void:
+                    parts.append(f"<{node.tag}{attrs} />")
+                elif node.is_raw_text:
+                    parts.append(
+                        f"<{node.tag}{attrs}>{node.render_raw_text()}</{node.tag}>"
+                    )
+                else:
+                    parts.append(f"<{node.tag}{attrs}>")
+                    stack.append(f"</{node.tag}>")
+                    stack.extend(reversed(node.children))
+            else:
+                # A leaf, or a subclass with its own __str__ to honor.
+                parts.append(str(node))
+        return marker()("".join(parts))
 
     def render_raw_text(self) -> str:
         """Render <script>/<style> content without HTML-escaping it.
@@ -668,6 +721,7 @@ _TAGS = [
     "search",
     "section",
     "select",
+    "selectedcontent",
     "slot",
     "small",
     "source",

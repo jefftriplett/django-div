@@ -108,6 +108,7 @@ HTML_ELEMENTS = set(
         "search",
         "section",
         "select",
+        "selectedcontent",
         "slot",
         "small",
         "source",

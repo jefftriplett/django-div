@@ -66,6 +66,10 @@ Tag(name, *children, **attrs)
 `find_all(tag=None, **attrs)`
 :   Every matching descendant.
 
+`iter_find(tag=None, **attrs)`
+:   `find_all()` as a lazy iterator; `find()` uses it to stop at the first
+    hit.
+
 `walk()`
 :   Yields this item then every descendant, depth first.
 
@@ -140,6 +144,7 @@ Unescaped markup. `Raw(content="<b>x</b>")` renders as-is.
 | `PRE_TAGS` | `pre`, `textarea` |
 | `DOCUMENT_TAGS` | `html`, `head`, `body` |
 | `ATTR_OVERRIDES` | Irregular attribute spellings |
+| `ATTR_NAME_RE` | What a rendered attribute name may look like |
 | `PARSERS` | Parser preference order |
 
 ## Element classes
@@ -147,7 +152,8 @@ Unescaped markup. `Raw(content="<b>x</b>")` renders as-is.
 Every element in the HTML living standard has a generated class, named after
 the tag with a capital letter: `Div`, `P`, `H1`, `Textarea`, `Del`. Names are
 capitalized so they never collide with builtins like `input`, `object`, or
-`map`.
+`map`. The set tracks the WHATWG living standard, including recent additions
+like `Search` and `Selectedcontent`.
 
 `param` is also included — obsolete, but still found in old documents.
 

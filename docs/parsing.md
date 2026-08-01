@@ -37,6 +37,7 @@ page.text                          # all text in the subtree, unescaped
 page.find("a")                     # first matching descendant, or None
 page.find("a", class_="external")  # match on attributes too
 page.find_all("a")                 # every matching descendant
+page.iter_find("a")                # the same, lazily
 page.walk()                        # every node, depth first, including text
 ```
 

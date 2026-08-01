@@ -346,3 +346,62 @@ def test_empty_style_mapping_drops_the_attribute():
 
 def test_partly_true_class_mapping_still_renders():
     assert str(Div(class_={"btn": True, "active": False})) == '<div class="btn"></div>'
+
+
+# --- regression tests: deep trees, clones, attribute-name safety ------------
+
+
+def build_deep(depth):
+    root = tip = Div()
+    for _ in range(depth):
+        new = Div()
+        tip.children.append(new)
+        tip = new
+    return root
+
+
+def test_deep_trees_render_walk_and_search():
+    # Recursive implementations overflowed the Python stack around ~1000.
+    deep = build_deep(3000)
+    assert str(deep).count("<div>") == 3001
+    assert sum(1 for _ in deep.walk()) == 3001
+    assert deep.text == ""
+    assert deep.find("p") is None
+
+
+def test_deep_documents_parse():
+    depth = 2500
+    page = from_html("<i>" * depth + "x" + "</i>" * depth, parser="html.parser")
+    assert sum(1 for _ in page.walk()) == depth + 1
+
+
+def test_call_clone_does_not_share_attrs():
+    card = Div(class_="card")
+    clone = card(P("x"))
+    clone.attrs["id"] = "mutated"
+    assert card.attrs == {"class": "card"}, "the original must be untouched"
+
+
+def test_attrs_named_tag_and_attrs_together_are_attributes():
+    # Both at once used to be mistaken for a Pydantic validation payload.
+    assert str(Tag("div", tag="v", attrs="w")) == '<div tag="v" attrs="w"></div>'
+
+
+def test_malformed_attribute_names_are_refused():
+    # Values are escaped; names cannot be, so a crafted name could smuggle
+    # a second attribute (e.g. an onload handler) into the output.
+    evil = Div(**{'x="y" onload="alert(1)': "z"})
+    with pytest.raises(ValueError, match="invalid attribute name"):
+        str(evil)
+
+
+def test_ordinary_attribute_names_pass_validation():
+    assert str(Div(data_x="1", aria_label="ok", hx_get="/x")) == (
+        '<div data-x="1" aria-label="ok" hx-get="/x"></div>'
+    )
+
+
+def test_iter_find_is_lazy():
+    tree = Div(P("hit"), P("later"))
+    found = tree.iter_find("p")
+    assert next(found).text == "hit"
