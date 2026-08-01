@@ -157,12 +157,12 @@ def as_html_item(value: Any) -> Any:
     return cls(**value) if cls else value
 
 
-def from_html(html: str, parser: str | None = None) -> Any:
+def from_html(html: str, *, parser: str | None = None) -> Any:
     """Parse HTML, returning a single item when there is one root.
 
     Convenience wrapper over parse(), which always returns a list.
     """
-    items = parse(html, parser)
+    items = parse(html, parser=parser)
     return items[0] if len(items) == 1 else items
 
 
@@ -176,7 +176,7 @@ def is_collection(value: Any) -> bool:
     return isinstance(value, (list, tuple, set, frozenset, Iterator, range))
 
 
-def is_field_payload(children: tuple[Any, ...], attrs: dict[str, Any]) -> bool:
+def is_field_payload(children: tuple[Any, ...], *, attrs: dict[str, Any]) -> bool:
     """Is this ``__init__`` call Pydantic re-validating a serialized Tag?
 
     Defining ``__init__`` makes Pydantic v2 route validation through it, so
@@ -226,7 +226,7 @@ def normalize_attr(name: str) -> str:
     return name.removesuffix("_").replace("_", "-")
 
 
-def parse(html: str, parser: str | None = None) -> list[HtmlItem]:
+def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     """Parse an HTML string into a list of top-level items.
 
     The result is the same kind of tree the constructors build, so parsed
@@ -262,11 +262,13 @@ def parse(html: str, parser: str | None = None) -> list[HtmlItem]:
             }
             cls = TAG_CLASSES.get(node.name)
             item = cls(**attrs) if cls else Tag(node.name, **attrs)
-            item.children = convert_children(node.contents, node.name in PRE_TAGS)
+            item.children = convert_children(
+                node.contents, verbatim=node.name in PRE_TAGS
+            )
             return item
         return None
 
-    def convert_children(nodes: list[Any], verbatim: bool = False) -> list[HtmlItem]:
+    def convert_children(nodes: list[Any], *, verbatim: bool = False) -> list[HtmlItem]:
         items: list[HtmlItem] = []
         for index, node in enumerate(nodes):
             if not verbatim and is_blank_text(node):
@@ -352,7 +354,7 @@ def render_style(value: Any) -> str:
     )
 
 
-def tag_class(tag: str, name: str | None = None) -> type[Tag]:
+def tag_class(tag: str, *, name: str | None = None) -> type[Tag]:
     """Build a Tag subclass bound to one tag name, so ``Div(...)`` works.
 
     Defined as a subclass with a fixed ``__init__`` rather than a Pydantic
@@ -362,7 +364,7 @@ def tag_class(tag: str, name: str | None = None) -> type[Tag]:
     name = name or tag.replace("-", "_").title().replace("_", "")
 
     def __init__(self, *children: Any, **attrs: Any) -> None:
-        if is_field_payload(children, attrs):
+        if is_field_payload(children, attrs=attrs):
             Tag.__init__(self, **attrs)
         else:
             Tag.__init__(self, tag, *children, **attrs)
@@ -434,7 +436,7 @@ class Tag(HtmlItem):
     attrs: dict[str, Any] = Field(default_factory=dict)
 
     def __init__(self, _tag: str | None = None, *children: Any, **attrs: Any) -> None:
-        if is_field_payload(children, attrs):
+        if is_field_payload(children, attrs=attrs):
             super().__init__(**attrs)
             return
         items = list(iter_children(children))

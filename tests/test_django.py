@@ -141,6 +141,6 @@ def test_render_component_passes_everything_to_var_keyword():
     def component(**context):
         return P(str(sorted(context)))
 
-    assert render_component(component, {"b": 1, "a": 2}) == (
+    assert render_component(component, context={"b": 1, "a": 2}) == (
         "<p>[&#x27;a&#x27;, &#x27;b&#x27;]</p>"
     )

@@ -4,6 +4,12 @@
 @bootstrap:
 	uv sync
 
+@docs:
+	uv run zensical serve
+
+@docs-build:
+	uv run zensical build --clean --strict
+
 @example:
 	uv run --with rich --with typer python examples/example.py
 

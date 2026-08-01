@@ -78,7 +78,7 @@ def csrf_input(request: Any) -> Raw:
     )
 
 
-def render_component(component: Component, context: dict[str, Any]) -> str:
+def render_component(component: Component, *, context: dict[str, Any]) -> str:
     """Call a component with the parts of the context it asks for.
 
     A component declaring ``**kwargs`` receives the whole context; one that
@@ -122,7 +122,7 @@ class Template:
             context.setdefault("request", request)
             for processor in self.backend.context_processors:
                 context.update(processor(request))
-        return mark_safe(render_component(self.component, context))
+        return mark_safe(render_component(self.component, context=context))
 
 
 class DjangoDivTemplates(BaseEngine):

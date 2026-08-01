@@ -20,6 +20,11 @@ dependencies = [
     "pydantic>=2.13",
 ]
 
+[project.urls]
+Documentation = "https://jefftriplett.github.io/django-div/"
+Repository = "https://github.com/jefftriplett/django-div"
+Issues = "https://github.com/jefftriplett/django-div/issues"
+
 # parse()/from_html() are the only things that need a parser, and the imports
 # are guarded, so none of this is required just to build HTML.
 [project.optional-dependencies]
@@ -44,6 +49,7 @@ dev = [
     "prek>=0.4",
     "pytest>=8.0",
     "ruff>=0.16",
+    "zensical>=0.0.52",
 ]
 
 [build-system]

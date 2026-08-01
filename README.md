@@ -2,6 +2,8 @@
 
 Build and parse HTML in Python with Pydantic models.
 
+**[Documentation](https://jefftriplett.github.io/django-div/)**
+
 ```python
 from django_div import A, Div, P
 
@@ -171,6 +173,7 @@ just bootstrap       # uv sync
 just install-hooks   # prek install
 just test            # pytest
 just lint            # prek run --all-files
+just docs            # serve the docs locally
 just example         # run examples/example.py
 ```
 

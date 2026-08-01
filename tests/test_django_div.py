@@ -303,3 +303,30 @@ def test_default_parser_closes_implicit_paragraphs():
 
 def test_explicit_parser_is_honored():
     assert str(from_html("<p>hi</p>", parser="html.parser")) == "<p>hi</p>"
+
+
+def test_public_functions_take_at_most_one_positional_argument():
+    """Everything after the first argument is keyword-only.
+
+    Named arguments read better at the call site and can be reordered or
+    added without breaking anyone. Tag constructors are exempt: their
+    positional arguments are variadic children, not options.
+    """
+    import inspect
+
+    import django_div
+
+    positional = (
+        inspect.Parameter.POSITIONAL_ONLY,
+        inspect.Parameter.POSITIONAL_OR_KEYWORD,
+    )
+    offenders = {}
+    for name in django_div.__all__:
+        value = getattr(django_div, name)
+        if not inspect.isfunction(value):
+            continue
+        parameters = inspect.signature(value).parameters.values()
+        count = sum(1 for p in parameters if p.kind in positional)
+        if count > 1:
+            offenders[name] = count
+    assert not offenders
