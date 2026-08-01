@@ -153,6 +153,31 @@ Anything implementing the `__html__` protocol — a Django `SafeString`, a
 `markupsafe.Markup`, a rendered form — is trusted and passes through
 unescaped, so interop with other libraries needs no special handling.
 
+### Comments
+
+`Comment` renders an HTML comment. A comment is not an escaping context, so
+its content is not HTML-escaped — instead the three comment-syntax rules are
+neutralized on render, because each one would otherwise let content escape
+the comment:
+
+```python
+Comment(content="note")    # <!--note-->
+Comment(content="a--b")    # <!--a- -b-->
+Comment(content=">boom")   # <!-- >boom-->
+Comment(content="x-")      # <!--x- -->
+```
+
+- `--` inside a comment would end it early, so it becomes `- -`.
+- HTML5 reads `<!-->` and `<!--->` as *complete* comments, so a leading `>`
+  or `->` would leave the rest of the content parsing as live markup — for
+  untrusted content, that is script execution. A space is padded in front.
+- A trailing `-` would produce the invalid `<!--x--->`; a space is padded.
+
+The padding is the whole defense: unlike a `<script>` break-out, a space
+changes nothing about what a comment means, so there is no reason to raise.
+Content that hits a rule comes back slightly altered on a round trip;
+ordinary comments are untouched.
+
 ## Element categories
 
 Three groups of elements behave differently, and django-div enforces the

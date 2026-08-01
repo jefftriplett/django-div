@@ -423,3 +423,22 @@ def test_comment_trailing_dash_is_padded():
 
 def test_ordinary_comments_are_untouched():
     assert str(Comment(content="a note")) == "<!--a note-->"
+
+
+def test_comment_double_dash_is_neutralized():
+    # -- inside a comment would end it early.
+    assert str(Comment(content="a--b")) == "<!--a- -b-->"
+    assert str(Comment(content="a----b")) == "<!--a- -- -b-->"
+
+
+def test_comment_content_is_not_html_escaped():
+    # A comment is not an escaping context; the syntax rules above are the
+    # defense, not entity escaping.
+    assert str(Comment(content="<b> & </b>")) == "<!--<b> & </b>-->"
+
+
+def test_comment_edge_content_survives_json_round_trip():
+    tree = Div(Comment(content=">--x-"))
+    restored = Tag.model_validate_json(tree.model_dump_json())
+    assert str(restored) == str(tree)
+    assert restored.children[0].content == ">--x-", "content stored verbatim"

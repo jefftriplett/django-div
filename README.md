@@ -36,6 +36,15 @@ Script("if (a < b) { go() }")   # <script>if (a < b) { go() }</script>
 Void elements raise rather than silently dropping children, and a raw-text
 element refuses to render content containing its own closing tag.
 
+Comments neutralize HTML's comment-syntax rules on render, so content can
+never close the comment early or leak out as live markup:
+
+```python
+Comment(content="note")   # <!--note-->
+Comment(content="a--b")   # <!--a- -b-->   -- would end the comment
+Comment(content=">boom")  # <!-- >boom-->  HTML5 reads <!--> as a whole comment
+```
+
 `None` and `False` children drop out, so inline conditionals work. Lists and
 generators flatten, so comprehensions splat in.
 
