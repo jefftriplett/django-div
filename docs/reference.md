@@ -132,7 +132,8 @@ Unescaped markup. `Raw(content="<b>x</b>")` renders as-is.
 
 | Name | Contents |
 | --- | --- |
-| `TAG_CLASSES` | Tag name to generated class |
+| `TAG_CLASSES` | Tag name to class, including ones registered at runtime |
+| `BUILTIN_TAGS` | The element names this library ships |
 | `ITEM_CLASSES` | Discriminator to leaf class |
 | `VOID_TAGS` | Elements that self-close |
 | `RAW_TEXT_TAGS` | `script`, `style` |

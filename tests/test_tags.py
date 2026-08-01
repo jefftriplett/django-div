@@ -8,6 +8,7 @@ import pytest
 
 import django_div
 from django_div import (
+    BUILTIN_TAGS,
     PRE_TAGS,
     RAW_TEXT_TAGS,
     TAG_CLASSES,
@@ -139,7 +140,7 @@ HTML_ELEMENTS = set(
 #: Dropped from the standard but still found in the wild, so still parsed.
 LEGACY_ELEMENTS = {"param"}
 
-TAGS = sorted(TAG_CLASSES)
+TAGS = sorted(BUILTIN_TAGS)
 NORMAL_TAGS = [t for t in TAGS if t not in VOID_TAGS and t not in RAW_TEXT_TAGS]
 
 
@@ -147,16 +148,18 @@ NORMAL_TAGS = [t for t in TAGS if t not in VOID_TAGS and t not in RAW_TEXT_TAGS]
 
 
 def test_every_html_element_has_a_class():
-    assert not HTML_ELEMENTS - set(TAG_CLASSES)
+    assert not HTML_ELEMENTS - BUILTIN_TAGS
 
 
 def test_no_unknown_tags_are_generated():
-    assert not set(TAG_CLASSES) - HTML_ELEMENTS - LEGACY_ELEMENTS
+    # BUILTIN_TAGS, not TAG_CLASSES: the registry also holds anything a
+    # caller registered with tag_class(), which is not ours to police.
+    assert not BUILTIN_TAGS - HTML_ELEMENTS - LEGACY_ELEMENTS
 
 
 @pytest.mark.parametrize("category", [VOID_TAGS, RAW_TEXT_TAGS, PRE_TAGS])
 def test_categories_only_name_real_tags(category):
-    assert not category - set(TAG_CLASSES)
+    assert not category - BUILTIN_TAGS
 
 
 # --- every tag, the basics --------------------------------------------------

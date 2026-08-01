@@ -331,3 +331,18 @@ def test_public_functions_take_at_most_one_positional_argument():
         if count > 1:
             offenders[name] = count
     assert not offenders
+
+
+def test_empty_class_mapping_drops_the_attribute():
+    # class="" is noise; an all-false mapping means no classes at all.
+    assert str(Div(class_={"active": False})) == "<div></div>"
+    assert str(Div(class_=[])) == "<div></div>"
+    assert str(Div(class_="")) == "<div></div>"
+
+
+def test_empty_style_mapping_drops_the_attribute():
+    assert str(Div(style={})) == "<div></div>"
+
+
+def test_partly_true_class_mapping_still_renders():
+    assert str(Div(class_={"btn": True, "active": False})) == '<div class="btn"></div>'

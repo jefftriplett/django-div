@@ -30,6 +30,7 @@ from pydantic import BaseModel, BeforeValidator, Field, SerializeAsAny
 
 __all__ = [
     "ATTR_OVERRIDES",
+    "BUILTIN_TAGS",
     "DOCUMENT_TAGS",
     "ITEM_CLASSES",
     "PARSERS",
@@ -320,10 +321,12 @@ def render_attrs(attrs: dict[str, Any]) -> str:
         if value is True:
             parts.append(name)
             continue
-        if name == "class":
-            value = render_class(value)
-        elif name == "style":
-            value = render_style(value)
+        if name in ("class", "style"):
+            value = render_class(value) if name == "class" else render_style(value)
+            # An all-false mapping means "no classes", so drop the attribute
+            # rather than emitting class="", the way False drops one outright.
+            if not value:
+                continue
         parts.append(f'{name}="{escape(str(value), quote=True)}"')
     return f" {' '.join(parts)}" if parts else ""
 
@@ -699,3 +702,7 @@ for _tag in _TAGS:
     __all__.append(_cls.__name__)
 
 del _tag, _cls
+
+#: The elements this module generates, as opposed to any registered later by
+#: tag_class(). TAG_CLASSES grows at runtime; this does not.
+BUILTIN_TAGS = frozenset(_TAGS)
