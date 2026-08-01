@@ -764,6 +764,11 @@ _TAGS = [
 
 for _tag in _TAGS:
     _cls = tag_class(_tag)
+    # Custom elements registered later get no MDN link; these are standard.
+    _cls.__doc__ = (
+        f"The HTML <{_tag}> element.\n\n"
+        f"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/{_tag}"
+    )
     globals()[_cls.__name__] = _cls
     __all__.append(_cls.__name__)
 

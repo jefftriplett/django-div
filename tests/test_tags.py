@@ -326,3 +326,28 @@ def test_mixed_children_and_several_attributes(tag):
     assert str(cls(cls("a"), "tail", class_="md", id="x")) == (
         f'<{tag} class="md" id="x"><{tag}>a</{tag}>tail</{tag}>'
     )
+
+
+def test_documented_element_count_matches_reality():
+    """The '114 elements' claim in the docs and README tracks BUILTIN_TAGS."""
+    import pathlib
+
+    root = pathlib.Path(__file__).parent.parent
+    claim = f"{len(BUILTIN_TAGS)} elements"
+    for name in ("docs/reference.md", "docs/building.md", "README.md"):
+        assert claim in (root / name).read_text(), name
+
+
+@pytest.mark.parametrize("tag", TAGS)
+def test_builtin_docstrings_link_to_mdn(tag):
+    assert (
+        f"developer.mozilla.org/en-US/docs/Web/HTML/Element/{tag}"
+        in TAG_CLASSES[tag].__doc__
+    )
+
+
+def test_custom_elements_do_not_claim_mdn_pages():
+    from django_div import tag_class
+
+    cls = tag_class("not-a-real-element")
+    assert "mozilla" not in (cls.__doc__ or "")

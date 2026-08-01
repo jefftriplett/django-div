@@ -155,8 +155,15 @@ closed early and parse the remainder as live markup.
 Every element in the HTML living standard has a generated class, named after
 the tag with a capital letter: `Div`, `P`, `H1`, `Textarea`, `Del`. Names are
 capitalized so they never collide with builtins like `input`, `object`, or
-`map`. The set tracks the WHATWG living standard, including recent additions
-like `Search` and `Selectedcontent`.
+`map`.
+
+**114 elements** are generated — every element in the
+[WHATWG HTML living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3)
+including recent additions like `search` and `selectedcontent`, plus the
+legacy `param`. Each class's docstring links to its
+[MDN element reference](https://developer.mozilla.org/en-US/docs/Web/HTML/Element),
+the best per-element documentation available, so `help(Div)` points at the
+right page.
 
 `param` is also included — obsolete, but still found in old documents.
 
