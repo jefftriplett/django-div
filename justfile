@@ -2,22 +2,25 @@
 	just --list
 
 @bootstrap:
-	uv pip install --requirement requirements.in
+	uv sync
+
+@example:
+	uv run --with rich --with typer python examples/example.py
 
 # install the prek git hooks so lint runs on commit
 @install-hooks:
-	prek install
+	uv run prek install
 
 @lint:
-	prek run --all-files
+	uv run prek run --all-files
 
 # lint without prek, straight through ruff
 @ruff:
-	-python -m ruff check --fix
-	-python -m ruff format
+	-uv run ruff check --fix
+	-uv run ruff format
 
 @test *ARGS:
-	python -m pytest {{ ARGS }}
+	uv run pytest {{ ARGS }}
 
 @update-hooks:
-	prek auto-update
+	uv run prek auto-update

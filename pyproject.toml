@@ -1,0 +1,54 @@
+[project]
+name = "django-div"
+version = "0.1.0"
+description = "Build and parse HTML in Python with Pydantic models"
+readme = "README.md"
+authors = [
+    { name = "Jeff Triplett", email = "jeff.triplett@gmail.com" }
+]
+requires-python = ">=3.10"
+license = "MIT"
+keywords = ["django", "html", "pydantic", "templates"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Text Processing :: Markup :: HTML",
+]
+dependencies = [
+    "pydantic>=2.13",
+]
+
+# beautifulsoup4 is only needed for parse()/from_html(); the import is guarded.
+[project.optional-dependencies]
+parse = [
+    "beautifulsoup4>=4.12",
+]
+
+[dependency-groups]
+dev = [
+    "beautifulsoup4>=4.12",
+    "prek>=0.4",
+    "pytest>=8.0",
+    "ruff>=0.16",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.29,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["error::DeprecationWarning"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "FURB", # refurb
+    "I",    # isort
+    "RUF",  # ruff-specific
+    "SIM",  # flake8-simplify
+    "UP",   # pyupgrade
+]
