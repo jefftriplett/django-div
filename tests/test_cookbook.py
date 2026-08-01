@@ -47,7 +47,6 @@ from django_div import (
     tag_class,
 )
 from django_div.django import as_response, csrf_input
-from django_div.markdown import from_markdown, to_markdown
 
 # ---------------------------------------------------------------------------
 # Building
@@ -494,56 +493,3 @@ def test_html_email():
     body = render(document("Receipt", P("Hi Ana"), lang="en"))
     assert body.startswith("<!DOCTYPE html>")
     assert "<p>Hi Ana</p>" in body
-
-
-# ---------------------------------------------------------------------------
-# Markdown
-# ---------------------------------------------------------------------------
-
-
-def test_one_builder_two_formats():
-    # The same tree renders as HTML for the page and Markdown for the export.
-    table = data_table([{"name": "Ana", "age": 33}], ["name", "age"])
-    assert str(table).startswith("<table>")
-    assert to_markdown(table) == ("| name | age |\n| --- | --- |\n| Ana | 33 |")
-
-
-def test_convert_scraped_html_to_markdown():
-    html = "<article><h1>Post</h1><p>Text with <em>emphasis</em>.</p></article>"
-    assert to_markdown(from_html(html)) == "# Post\n\nText with *emphasis*."
-
-
-def render_user_markdown(text):
-    """Render untrusted-ish Markdown, hardening external links on the way."""
-    items = from_markdown(text)
-    items = items if isinstance(items, list) else [items]
-    for item in items:
-        if not isinstance(item, Tag):
-            continue
-        for link in item.find_all("a"):
-            href = link.attrs.get("href", "")
-            if href.startswith(("http://", "https://")):
-                link.attrs["rel"] = "noopener"
-                link.attrs["target"] = "_blank"
-    return "".join(str(item) for item in items)
-
-
-def test_render_user_markdown_hardens_external_links():
-    html = render_user_markdown("[in](/x) and [out](https://ex.test)")
-    assert '<a href="/x">in</a>' in html
-    assert '<a href="https://ex.test" rel="noopener" target="_blank">out</a>' in html
-
-
-def outline(markdown_text):
-    """Heading structure of a Markdown document, as (level, text) pairs."""
-    items = from_markdown(markdown_text)
-    items = items if isinstance(items, list) else [items]
-    return [
-        (int(item.tag[1]), item.text)
-        for item in items
-        if isinstance(item, Tag) and item.tag in {"h1", "h2", "h3", "h4", "h5", "h6"}
-    ]
-
-
-def test_outline_of_a_markdown_document():
-    assert outline("# A\n\ntext\n\n## B\n\n### C") == [(1, "A"), (2, "B"), (3, "C")]

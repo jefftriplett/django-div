@@ -13,9 +13,12 @@ nav = [
   { "Parsing HTML" = "parsing.md" },
   { "Serializing" = "serializing.md" },
   { "Markdown" = "markdown.md" },
-  { "Cookbook" = "cookbook.md" },
   { "Django" = "django.md" },
-  { "Django cookbook" = "django-cookbook.md" },
+  { "Cookbooks" = [
+    { "HTML" = "cookbook.md" },
+    { "Django" = "django-cookbook.md" },
+    { "Markdown" = "markdown-cookbook.md" },
+  ] },
   { "API reference" = "reference.md" },
   { "Contributing" = "contributing.md" },
 ]

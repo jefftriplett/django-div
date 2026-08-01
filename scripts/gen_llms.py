@@ -42,12 +42,19 @@ def site_url(project: dict) -> str:
 
 
 def nav_order(project: dict) -> list[str]:
-    """Page slugs in the order the nav declares them."""
-    slugs = []
-    for entry in project.get("nav", []):
-        for filename in entry.values():
-            slugs.append(pathlib.PurePosixPath(filename).stem)
-    return slugs
+    """Page slugs in the order the nav declares them, sections flattened."""
+
+    def walk(entries: list) -> list[str]:
+        slugs = []
+        for entry in entries:
+            for value in entry.values():
+                if isinstance(value, list):  # a section: {"Cookbooks": [...]}
+                    slugs += walk(value)
+                else:
+                    slugs.append(pathlib.PurePosixPath(value).stem)
+        return slugs
+
+    return walk(project.get("nav", []))
 
 
 class Extractor(HTMLParser):
