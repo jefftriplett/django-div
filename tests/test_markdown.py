@@ -56,6 +56,27 @@ def test_blockquote():
     assert to_markdown(Blockquote(P("a"), P("b"))) == "> a\n>\n> b"
 
 
+def test_loose_list_items_flatten_their_paragraphs():
+    """markdown-it renders loose lists as <li><p>...</p></li>."""
+    tree = from_html("<ul><li><p>first</p><p>second</p></li><li><p>b</p></li></ul>")
+    assert to_markdown(tree) == "- first second\n- b"
+
+
+def test_definition_list_keeps_terms_attached():
+    tree = from_html("<dl><dt>is_void</dt><dd>Whether it self-closes.</dd></dl>")
+    assert to_markdown(tree) == "is_void\n:   Whether it self-closes."
+
+
+def test_definition_list_separates_groups_with_blank_lines():
+    tree = from_html("<dl><dt>a</dt><dd>One.</dd><dt>b</dt><dd>Two.</dd></dl>")
+    assert to_markdown(tree) == "a\n:   One.\n\nb\n:   Two."
+
+
+def test_definition_list_term_with_several_definitions():
+    tree = from_html("<dl><dt>a</dt><dd>One.</dd><dd>Also one.</dd></dl>")
+    assert to_markdown(tree) == "a\n:   One.\n:   Also one."
+
+
 def test_code_fence_with_language():
     pre = Pre(Code("if a < b:\n    go()", class_="language-python"))
     assert to_markdown(pre) == "```python\nif a < b:\n    go()\n```"

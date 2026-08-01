@@ -1,27 +1,30 @@
 """llms.txt, llms-full.txt, and the per-page Markdown twins.
 
 The generator reads rendered HTML, so these tests feed it HTML directly
-rather than shelling out to a site build.
+rather than shelling out to a site build. The HTML-to-Markdown conversion
+itself lives in django_div.markdown and is tested there; these cover what
+the script adds on top — article selection, pruning, and configuration.
 """
 
 import pytest
 
-from scripts.gen_llms import Extractor, config, nav_order, site_url
+from scripts.gen_llms import config, convert, nav_order, site_url
 
 
 def markdown(html: str) -> str:
-    parser = Extractor()
-    parser.feed(f"<article>{html}</article>")
-    return parser.markdown()
+    return convert(f"<article>{html}</article>")[1]
 
 
 # --- extraction -------------------------------------------------------------
 
 
 def test_heading_becomes_the_title():
-    parser = Extractor()
-    parser.feed("<article><h1>Building HTML</h1><p>Body.</p></article>")
-    assert parser.title == "Building HTML"
+    title, _ = convert("<article><h1>Building HTML</h1><p>Body.</p></article>")
+    assert title == "Building HTML"
+
+
+def test_page_without_an_article_converts_to_nothing():
+    assert convert("<html><body><p>chrome only</p></body></html>") == (None, "")
 
 
 def test_headings_keep_their_level():
@@ -40,6 +43,7 @@ def test_nav_and_scripts_are_dropped():
 def test_permalink_anchors_are_dropped():
     out = markdown('<h2>Attributes<a class="headerlink" href="#a">¶</a></h2>')
     assert "¶" not in out
+    assert "## Attributes" in out
 
 
 def test_code_blocks_keep_language_and_indentation():
@@ -48,7 +52,7 @@ def test_code_blocks_keep_language_and_indentation():
         "<pre><code>def home():\n    return Div()\n</code></pre></div>"
     )
     assert "```python" in out
-    assert "    return Div()" in out, "indentation must survive normalisation"
+    assert "    return Div()" in out, "indentation must survive"
 
 
 def test_links_become_markdown():
@@ -61,9 +65,6 @@ def test_lists_become_bullets():
     assert "- two" in out
 
 
-# --- tables -----------------------------------------------------------------
-
-
 def test_tables_become_markdown_tables():
     out = markdown(
         "<table><thead><tr><th>Python</th><th>HTML</th></tr></thead>"
@@ -74,29 +75,9 @@ def test_tables_become_markdown_tables():
     assert "| class_ | class |" in out
 
 
-def test_table_cells_escape_pipes():
-    out = markdown("<table><tr><td>a|b</td></tr></table>")
-    assert r"a\|b" in out
-
-
-def test_ragged_table_rows_are_padded():
-    """A short row still gets the full column count, so the table parses."""
-    out = markdown("<table><tr><th>a</th><th>b</th></tr><tr><td>only</td></tr></table>")
-    assert "| only | |" in out
-
-
-# --- definition lists -------------------------------------------------------
-
-
 def test_definition_lists_stay_attached():
     out = markdown("<dl><dt>is_void</dt><dd>Whether it self-closes.</dd></dl>")
-    assert "is_void\n: Whether it self-closes." in out
-
-
-def test_several_definitions_are_separated():
-    out = markdown("<dl><dt>a</dt><dd>One.</dd><dt>b</dt><dd>Two.</dd></dl>")
-    assert "a\n: One." in out
-    assert "b\n: Two." in out
+    assert "is_void\n:   Whether it self-closes." in out
 
 
 # --- configuration ----------------------------------------------------------

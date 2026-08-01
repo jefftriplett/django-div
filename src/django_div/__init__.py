@@ -265,9 +265,9 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
 
     # Elements are converted shallow and their children attached from this
     # queue afterwards, so document depth is not bounded by the Python stack.
-    pending: list[tuple[Any, Tag]] = []
+    pending: list[tuple[Any, Tag, bool]] = []
 
-    def convert(node: Any) -> HtmlItem | None:
+    def convert(node: Any, *, verbatim: bool = False) -> HtmlItem | None:
         if isinstance(node, SoupDoctype):
             return Doctype(content=str(node))
         if isinstance(node, SoupComment):
@@ -281,7 +281,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
             }
             cls = TAG_CLASSES.get(node.name)
             item = cls(**attrs) if cls else Tag(node.name, **attrs)
-            pending.append((node, item))
+            pending.append((node, item, verbatim))
             return item
         return None
 
@@ -294,7 +294,7 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
                 if 0 < index < len(nodes) - 1:
                     items.append(Text(content=" "))
                 continue
-            item = convert(node)
+            item = convert(node, verbatim=verbatim)
             if item is not None:
                 items.append(item)
         return items
@@ -323,9 +323,12 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
     soup = BeautifulSoup(html, parser or best_parser())
     roots = convert_children(soup.contents)
     while pending:
-        soup_node, item = pending.pop()
+        soup_node, item, verbatim = pending.pop()
+        # Verbatim is inherited: whitespace is significant in the whole
+        # subtree of a <pre>, including inside the spans a syntax
+        # highlighter wraps around each line, not just its direct children.
         item.children = convert_children(
-            soup_node.contents, verbatim=soup_node.name in PRE_ELEMENTS
+            soup_node.contents, verbatim=verbatim or soup_node.name in PRE_ELEMENTS
         )
     if re.search(r"<\s*(html|head|body)\b", html, re.IGNORECASE):
         return roots

@@ -52,7 +52,6 @@ CONTAINER_TAGS = frozenset(
         "details",
         "dialog",
         "div",
-        "dl",
         "fieldset",
         "figure",
         "footer",
@@ -178,6 +177,8 @@ def _block(item: HtmlItem) -> str:
         return _inline_children(item)
     if tag == "dd":
         return f":   {_inline_children(item)}"
+    if tag == "dl":
+        return _definition_list(item)
     if tag == "hr":
         return "---"
     if tag == "br":
@@ -196,6 +197,27 @@ def _block(item: HtmlItem) -> str:
     # No block equivalent: fall back to inline handling, which itself falls
     # back to raw HTML for the truly unrepresentable.
     return _inline(item)
+
+
+def _definition_list(tag: Tag) -> str:
+    """A <dl> as definition-list groups.
+
+    Not a plain container: joining dt and dd as sibling blocks would put a
+    blank line between them, and a ``:`` line detached from its term stops
+    being a definition list. Within a group the newline is single; between
+    groups it is a blank line.
+    """
+    groups: list[list[str]] = []
+    for child in tag.children:
+        if not isinstance(child, Tag):
+            continue
+        if child.tag == "dt":
+            groups.append([_inline_children(child)])
+        elif child.tag == "dd":
+            if not groups:
+                groups.append([])
+            groups[-1].append(f":   {_inline_children(child)}")
+    return "\n\n".join("\n".join(group) for group in groups)
 
 
 def _fence(pre: Tag) -> str:
@@ -287,7 +309,21 @@ def _list(tag: Tag, *, indent: int = 0) -> str:
             if isinstance(grandchild, Tag) and grandchild.tag in ("ul", "ol")
         ]
         own = [grandchild for grandchild in child.children if grandchild not in nested]
-        first = "".join(_inline(grandchild) for grandchild in own).strip()
+        parts: list[str] = []
+        for grandchild in own:
+            if isinstance(grandchild, Tag) and (
+                grandchild.tag == "p" or grandchild.tag in CONTAINER_TAGS
+            ):
+                # Blocks inside a list item flatten onto the item's line:
+                # markdown-it renders every loose list as <li><p>...</p></li>,
+                # so treating <p> as unrepresentable would emit raw HTML for
+                # ordinary round-tripped lists.
+                if parts:
+                    parts.append(" ")
+                parts.append(_inline_children(grandchild))
+            else:
+                parts.append(_inline(grandchild))
+        first = "".join(parts).strip()
         lines.append(f"{pad}{marker}{first}")
         lines.extend(_list(sub, indent=indent + 4) for sub in nested)
         number += 1

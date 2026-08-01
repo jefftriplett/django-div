@@ -51,6 +51,7 @@ to_markdown(from_html("<article><h1>Title</h1><p>Body with <a href='/x'>a link</
 | `ul` / `ol` / `li` | `-` / `1.` items, nesting indented, `start=` honored |
 | `blockquote` | `> ` prefixed lines |
 | `table` | GFM pipe table — see [Tables](#tables) |
+| `dl` / `dt` / `dd` | definition list — the term, then `:   definition` attached |
 | `hr`, `br` | `---`, backslash hard break |
 | `div`, `section`, … | invisible — children render as blocks |
 | `span`, `mark`, … | invisible — children flow through inline |
