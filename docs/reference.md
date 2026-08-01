@@ -36,6 +36,13 @@ All four item types inherit from `HtmlItem`.
 
 An element: a name, children, and attributes.
 
+!!! note "Tag vs. element"
+
+    MDN and the HTML spec would call this class an *element* — a tag is
+    strictly just the `<div>` marker. The name follows BeautifulSoup, whose
+    node class is also `Tag`, and everyday usage. The `.tag` field holds the
+    element's tag name, which matches lxml's `Element.tag` exactly.
+
 ```python
 Tag(name, *children, **attrs)
 ```
