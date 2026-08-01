@@ -4,16 +4,20 @@ from django_div import (
     A,
     Br,
     Comment,
+    Del,
     Div,
     Img,
     Input,
     Li,
     P,
     Raw,
+    Script,
     Span,
+    Style,
     Tag,
     Text,
     Ul,
+    best_parser,
     from_html,
     normalize_attr,
     parse,
@@ -224,3 +228,78 @@ def test_edit_parsed_tree_and_rerender():
 
 def test_text_model_direct():
     assert str(Text(content="a & b")) == "a &amp; b"
+
+
+def test_script_content_is_not_escaped():
+    # Escaping would change what the JavaScript means.
+    assert str(Script("if (a < b && c) { x() }")) == (
+        "<script>if (a < b && c) { x() }</script>"
+    )
+
+
+def test_style_content_is_not_escaped():
+    assert str(Style("a > b { color: red }")) == "<style>a > b { color: red }</style>"
+
+
+def test_script_roundtrips_through_parsing():
+    html = "<script>if (a < b) { x() }</script>"
+    assert str(from_html(html)) == html
+
+
+def test_raw_text_refuses_to_be_broken_out_of():
+    tag = Script("</script><script>alert(1)</script>")
+    with pytest.raises(ValueError, match="would end the element"):
+        str(tag)
+
+
+def test_ordinary_tags_still_escape():
+    assert str(P("a < b")) == "<p>a &lt; b</p>"
+
+
+def test_pre_preserves_whitespace():
+    html = "<pre>line1\n  line2\n</pre>"
+    assert str(from_html(html)) == html
+
+
+def test_pre_preserves_whitespace_between_children():
+    html = "<pre><b>a</b>\n\n<b>b</b></pre>"
+    assert str(from_html(html)) == html
+
+
+def test_textarea_preserves_whitespace():
+    html = "<textarea>  keep  </textarea>"
+    assert str(from_html(html)) == html
+
+
+def test_void_tags_reject_children():
+    with pytest.raises(ValueError, match="void element"):
+        Br("nope")
+    with pytest.raises(ValueError, match="void element"):
+        Img("nope", src="a.png")
+
+
+def test_style_accepts_a_mapping():
+    assert str(Div(style={"color": "red", "font_size": "2rem"})) == (
+        '<div style="color: red; font-size: 2rem"></div>'
+    )
+
+
+def test_style_string_still_works():
+    assert str(Div(style="color: red")) == '<div style="color: red"></div>'
+
+
+def test_del_element_exists():
+    assert str(Del("gone")) == "<del>gone</del>"
+
+
+def test_best_parser_prefers_lxml_when_installed():
+    assert best_parser() == "lxml"
+
+
+def test_default_parser_closes_implicit_paragraphs():
+    # The stdlib parser nests these instead, which is wrong.
+    assert [str(item) for item in parse("<p>one<p>two")] == ["<p>one</p>", "<p>two</p>"]
+
+
+def test_explicit_parser_is_honored():
+    assert str(from_html("<p>hi</p>", parser="html.parser")) == "<p>hi</p>"

@@ -7,7 +7,23 @@ python example.py
 import typer
 from rich import print
 
-from django_div import H1, A, Br, Div, Img, Input, Li, P, Span, Tag, Ul, from_html
+from django_div import (
+    H1,
+    A,
+    Br,
+    Div,
+    Img,
+    Input,
+    Li,
+    P,
+    Script,
+    Span,
+    Style,
+    Tag,
+    Ul,
+    best_parser,
+    from_html,
+)
 
 
 def show(title: str, value: object) -> None:
@@ -38,12 +54,17 @@ def attributes() -> None:
     show("boolean attrs", Input(type="checkbox", checked=True, disabled=False))
     show("class as a list", Div(class_=["btn", "btn-primary"]))
     show("class as a mapping", Div(class_={"btn": True, "is-active": False}))
+    show("style as a mapping", Div(style={"color": "red", "font_size": "2rem"}))
 
 
 def escaping() -> None:
     """Text children are escaped, so user input is safe by default."""
     show("escaped text", Div("<script>alert(1)</script>"))
     show("escaped attribute", Div(title='he said "hi"'))
+
+    # ...but script and style hold code, not text, so they are left alone.
+    show("script is raw text", Script("if (a < b && c) { go() }"))
+    show("style is raw text", Style("a > b { color: red }"))
 
 
 def control_flow() -> None:
@@ -68,6 +89,7 @@ def parsing() -> None:
     """
     page = from_html(html)
 
+    show("parser in use", best_parser())
     show("parsed type", type(page).__name__)
     show("all text", page.text)
     show("find", page.find("a").attrs)

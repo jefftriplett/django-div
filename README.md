@@ -23,6 +23,17 @@ Div(class_={"btn": True, "on": False})   # <div class="btn"></div>
 Div("<script>x</script>")                # <div>&lt;script&gt;x&lt;/script&gt;</div>
 ```
 
+`style` takes a mapping too, and `<script>`/`<style>` content is left
+unescaped, since escaping it would change what the code means:
+
+```python
+Div(style={"color": "red", "font_size": "2rem"})
+Script("if (a < b) { go() }")   # <script>if (a < b) { go() }</script>
+```
+
+Void elements raise rather than silently dropping children, and a raw-text
+element refuses to render content containing its own closing tag.
+
 `None` and `False` children drop out, so inline conditionals work. Lists and
 generators flatten, so comprehensions splat in.
 
@@ -64,8 +75,13 @@ print(page)
 ```
 
 `parse()` is the underlying function and always returns a list;
-`from_html()` unwraps the single-root case. Both take a `parser` argument, so
-`lxml` and `html5lib` work if installed.
+`from_html()` unwraps the single-root case.
+
+Both pick the best parser installed — `lxml`, then `html5lib`, then the
+stdlib. That matters: the stdlib parser turns `<p>one<p>two` into *nested*
+paragraphs instead of closing the first, and lxml is also about 1.6x faster.
+Pass `parser=` to override. Fragments stay fragments — the `<html><body>`
+skeleton lxml and html5lib invent is stripped unless the source asked for it.
 
 ## Serializing
 
@@ -88,7 +104,8 @@ is not a dependency.
 
 ```console
 uv add django-div            # building only
-uv add 'django-div[parse]'   # plus from_html()/parse()
+uv add 'django-div[parse]'   # plus from_html()/parse(), via bs4 + lxml
+uv add 'django-div[html5]'   # spec-exact parsing, ~3x slower than lxml
 ```
 
 ## Development

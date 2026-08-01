@@ -19,6 +19,7 @@ renders bare, and ``False``/``None`` drop the attribute entirely.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Iterator
 from html import escape
 from typing import Annotated, Any, Literal
@@ -27,7 +28,11 @@ from pydantic import BaseModel, BeforeValidator, Field, SerializeAsAny
 
 __all__ = [
     "ATTR_OVERRIDES",
+    "DOCUMENT_TAGS",
     "ITEM_CLASSES",
+    "PARSERS",
+    "PRE_TAGS",
+    "RAW_TEXT_TAGS",
     "TAG_CLASSES",
     "VOID_TAGS",
     "Comment",
@@ -35,6 +40,7 @@ __all__ = [
     "Raw",
     "Tag",
     "Text",
+    "best_parser",
     "from_html",
     "normalize_attr",
     "parse",
@@ -58,11 +64,26 @@ ATTR_OVERRIDES = {
     "is_": "is",
 }
 
+#: Wrappers a parser may invent around a fragment.
+DOCUMENT_TAGS = frozenset({"body", "head", "html"})
+
 #: Keys Pydantic passes back when it re-validates a serialized Tag.
 FIELD_KEYS = frozenset({"attrs", "children", "tag", "type"})
 
 #: Discriminator value -> class, for rebuilding leaves from a dump.
 ITEM_CLASSES: dict[str, type[HtmlItem]] = {}
+
+#: Parsers to try, best first. lxml is both faster and more correct than the
+#: stdlib parser, which nests implicit closes (``<p>a<p>b``) instead of
+#: closing them.
+PARSERS = ("lxml", "html5lib", "html.parser")
+
+#: Elements whose text content is significant, so parsing keeps it verbatim.
+PRE_TAGS = frozenset({"pre", "textarea"})
+
+#: Elements whose content is raw text, never HTML-escaped on render. Escaping
+#: these would corrupt them: ``if (a < b)`` is not ``if (a &lt; b)``.
+RAW_TEXT_TAGS = frozenset({"script", "style"})
 
 #: Tag name -> generated class, for rebuilding a typed tree from a dump.
 TAG_CLASSES: dict[str, type[Tag]] = {}
@@ -88,6 +109,16 @@ VOID_TAGS = frozenset(
 )
 
 
+def best_parser() -> str:
+    """The best BeautifulSoup backend installed, preferring correctness."""
+    from importlib.util import find_spec
+
+    for parser in PARSERS:
+        if parser == "html.parser" or find_spec(parser.split(".")[0]):
+            return parser
+    return "html.parser"  # pragma: no cover - html.parser is always present
+
+
 def as_html_item(value: Any) -> Any:
     """Rebuild an HtmlItem from a plain dict, keeping its original class.
 
@@ -106,7 +137,7 @@ def as_html_item(value: Any) -> Any:
     return cls(**value) if cls else value
 
 
-def from_html(html: str, parser: str = "html.parser") -> Any:
+def from_html(html: str, parser: str | None = None) -> Any:
     """Parse HTML, returning a single item when there is one root.
 
     Convenience wrapper over parse(), which always returns a list.
@@ -160,7 +191,7 @@ def normalize_attr(name: str) -> str:
     return name.removesuffix("_").replace("_", "-")
 
 
-def parse(html: str, parser: str = "html.parser") -> list[HtmlItem]:
+def parse(html: str, parser: str | None = None) -> list[HtmlItem]:
     """Parse an HTML string into a list of top-level items.
 
     The result is the same kind of tree the constructors build, so parsed
@@ -171,8 +202,8 @@ def parse(html: str, parser: str = "html.parser") -> list[HtmlItem]:
             link.attrs["rel"] = "noopener"
         print(page)
 
-    Requires beautifulsoup4. ``parser`` is handed to BeautifulSoup, so
-    "lxml" or "html5lib" work if they are installed.
+    Requires beautifulsoup4. ``parser`` is handed to BeautifulSoup; it
+    defaults to the best backend installed, see best_parser().
     """
     try:
         from bs4 import BeautifulSoup
@@ -196,14 +227,14 @@ def parse(html: str, parser: str = "html.parser") -> list[HtmlItem]:
             }
             cls = TAG_CLASSES.get(node.name)
             item = cls(**attrs) if cls else Tag(node.name, **attrs)
-            item.children = convert_children(node.contents)
+            item.children = convert_children(node.contents, node.name in PRE_TAGS)
             return item
         return None
 
-    def convert_children(nodes: list[Any]) -> list[HtmlItem]:
+    def convert_children(nodes: list[Any], verbatim: bool = False) -> list[HtmlItem]:
         items: list[HtmlItem] = []
         for index, node in enumerate(nodes):
-            if is_blank_text(node):
+            if not verbatim and is_blank_text(node):
                 # Whitespace between two siblings is a word break, so keep one
                 # space; source indentation around them is noise, so drop it.
                 if 0 < index < len(nodes) - 1:
@@ -220,7 +251,26 @@ def parse(html: str, parser: str = "html.parser") -> list[HtmlItem]:
         )
         return is_plain_string and not str(node).strip()
 
-    return convert_children(BeautifulSoup(html, parser).contents)
+    def unwrap_implicit(items: list[HtmlItem]) -> list[HtmlItem]:
+        """Drop <html>/<head>/<body> that the parser invented.
+
+        lxml and html5lib wrap a fragment in a document skeleton, which would
+        turn a parse-edit-render round trip into a rewrite. Wrappers the
+        source actually asked for are kept.
+        """
+        unwrapped = []
+        for item in items:
+            if isinstance(item, Tag) and item.tag in DOCUMENT_TAGS:
+                unwrapped.extend(unwrap_implicit(item.children))
+            else:
+                unwrapped.append(item)
+        return unwrapped
+
+    soup = BeautifulSoup(html, parser or best_parser())
+    roots = convert_children(soup.contents)
+    if re.search(r"<\s*(html|head|body)\b", html, re.IGNORECASE):
+        return roots
+    return unwrap_implicit(roots)
 
 
 def render_attrs(attrs: dict[str, Any]) -> str:
@@ -235,6 +285,8 @@ def render_attrs(attrs: dict[str, Any]) -> str:
             continue
         if name == "class":
             value = render_class(value)
+        elif name == "style":
+            value = render_style(value)
         parts.append(f'{name}="{escape(str(value), quote=True)}"')
     return f" {' '.join(parts)}" if parts else ""
 
@@ -248,6 +300,21 @@ def render_class(value: Any) -> str:
     if isinstance(value, Iterable):
         return " ".join(str(item) for item in value if item)
     return str(value)
+
+
+def render_style(value: Any) -> str:
+    """Accept a string or a {property: value} mapping for ``style``.
+
+    Property names are normalized too, so ``{"font_size": "2rem"}`` becomes
+    ``font-size: 2rem``.
+    """
+    if not isinstance(value, dict):
+        return str(value)
+    return "; ".join(
+        f"{normalize_attr(name)}: {item}"
+        for name, item in value.items()
+        if item is not None and item is not False
+    )
 
 
 def tag_class(tag: str, name: str | None = None) -> type[Tag]:
@@ -340,11 +407,19 @@ class Tag(HtmlItem):
         if is_field_payload(children, attrs):
             super().__init__(**attrs)
             return
+        items = list(iter_children(children))
+        if items and _tag in VOID_TAGS:
+            # Rendering would drop them silently, which hides the mistake.
+            raise ValueError(f"<{_tag}> is a void element and cannot have children")
         super().__init__(
             tag=_tag,
-            children=list(iter_children(children)),
+            children=items,
             attrs={normalize_attr(key): value for key, value in attrs.items()},
         )
+
+    @property
+    def is_raw_text(self) -> bool:
+        return self.tag in RAW_TEXT_TAGS
 
     @property
     def is_void(self) -> bool:
@@ -399,8 +474,29 @@ class Tag(HtmlItem):
         attrs = render_attrs(self.attrs)
         if self.is_void:
             return f"<{self.tag}{attrs} />"
-        children = "".join(str(child) for child in self.children)
+        if self.is_raw_text:
+            children = self.render_raw_text()
+        else:
+            children = "".join(str(child) for child in self.children)
         return f"<{self.tag}{attrs}>{children}</{self.tag}>"
+
+    def render_raw_text(self) -> str:
+        """Render <script>/<style> content without HTML-escaping it.
+
+        Nothing can escape a raw text element except its own closing tag, so
+        a child containing one would break out and, for a <script>, run as
+        markup. That is refused rather than mangled.
+        """
+        content = "".join(
+            child.content if isinstance(child, (Text, Raw)) else str(child)
+            for child in self.children
+        )
+        if f"</{self.tag}" in content.lower():
+            raise ValueError(
+                f"<{self.tag}> content cannot contain '</{self.tag}'; "
+                f"it would end the element"
+            )
+        return content
 
 
 class Text(HtmlItem):
@@ -442,6 +538,7 @@ _TAGS = [
     "data",
     "datalist",
     "dd",
+    "del",
     "details",
     "dfn",
     "dialog",

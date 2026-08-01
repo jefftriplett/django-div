@@ -20,15 +20,26 @@ dependencies = [
     "pydantic>=2.13",
 ]
 
-# beautifulsoup4 is only needed for parse()/from_html(); the import is guarded.
+# parse()/from_html() are the only things that need a parser, and the imports
+# are guarded, so none of this is required just to build HTML.
 [project.optional-dependencies]
+# beautifulsoup4 alone falls back to the stdlib parser, which nests implicit
+# closes (<p>a<p>b) rather than closing them.
 parse = [
     "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+]
+# Spec-exact parsing, roughly 3x slower than lxml.
+html5 = [
+    "beautifulsoup4>=4.12",
+    "html5lib>=1.1",
 ]
 
 [dependency-groups]
 dev = [
     "beautifulsoup4>=4.12",
+    "html5lib>=1.1",
+    "lxml>=5.0",
     "prek>=0.4",
     "pytest>=8.0",
     "ruff>=0.16",
