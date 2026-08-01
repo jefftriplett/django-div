@@ -95,10 +95,63 @@ Tag.model_validate_json(payload)   # same tree, same subclasses
 
 ## Django
 
-`HtmlItem.__html__()` satisfies the Django and Jinja2 safe-string protocol, so
-tags drop into a template context without `|safe`. `.render()` returns a
-`SafeString` when Django is installed and a plain `str` when it isn't — Django
-is not a dependency.
+Django is never imported unless it is installed, so it stays an optional
+dependency.
+
+### Components as templates
+
+Register the backend and a component becomes addressable as a template:
+
+```python
+TEMPLATES = [
+    {
+        "BACKEND": "django_div.django.DjangoDivTemplates",
+        "NAME": "django_div",
+        "DIRS": [],
+        "APP_DIRS": False,
+        "OPTIONS": {"context_processors": [...]},
+    },
+    # your usual DjangoTemplates entry can stay alongside it
+]
+```
+
+```python
+# myapp/components.py
+def home(title, **context):
+    return Div(H1(title), class_="page")
+
+# myapp/views.py
+def home_view(request):
+    return render(request, "myapp.components.home", {"title": "Hi"})
+```
+
+A component is any callable returning an `HtmlItem`. It receives the context
+as keyword arguments — the whole context if it declares `**kwargs`, otherwise
+only the parameters it names, so context processors can add `user` and friends
+without breaking every signature.
+
+### Without the template layer
+
+```python
+from django_div.django import as_response, csrf_input
+
+def index(request):
+    return as_response(Div(H1("Hi")))
+
+def form_view(request):
+    return as_response(Form(csrf_input(request), Input(name="q"), method="post"))
+```
+
+### Escaping
+
+Rendering escapes text and attribute values, so output is safe markup by
+construction and `{{ tag }}` works in a Django template with no `|safe`.
+Interop runs both ways: anything with `__html__` — a `SafeString`, a
+`markupsafe.Markup`, a rendered Django form — passes through a tag unescaped,
+while plain strings are still escaped.
+
+Lazy objects work too: `Div(gettext_lazy("Hello"))` resolves to one string
+rather than one element per character.
 
 ## Install
 
@@ -107,6 +160,9 @@ uv add django-div            # building only
 uv add 'django-div[parse]'   # plus from_html()/parse(), via bs4 + lxml
 uv add 'django-div[html5]'   # spec-exact parsing, ~3x slower than lxml
 ```
+
+Django is optional and never imported unless installed; `django_div.django`
+is the only module that needs it.
 
 ## Development
 

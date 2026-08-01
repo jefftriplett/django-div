@@ -19,8 +19,10 @@ renders bare, and ``False``/``None`` drop the attribute entirely.
 
 from __future__ import annotations
 
+import json
 import re
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
+from functools import cache
 from html import escape
 from typing import Annotated, Any, Literal
 
@@ -42,6 +44,8 @@ __all__ = [
     "Text",
     "best_parser",
     "from_html",
+    "is_collection",
+    "marker",
     "normalize_attr",
     "parse",
     "tag_class",
@@ -109,6 +113,22 @@ VOID_TAGS = frozenset(
 )
 
 
+@cache
+def marker() -> Callable[[str], str]:
+    """Django's mark_safe if it is installed, otherwise a passthrough.
+
+    Rendering escapes text and attribute values, so output is safe markup by
+    construction. Saying so matters in a Django template: ``{{ tag }}`` calls
+    ``str()`` on anything that is not already a str *before* it looks for
+    ``__html__``, so returning a plain str would get the markup escaped.
+    """
+    try:
+        from django.utils.safestring import mark_safe
+    except ImportError:
+        return lambda value: value
+    return mark_safe
+
+
 def best_parser() -> str:
     """The best BeautifulSoup backend installed, preferring correctness."""
     from importlib.util import find_spec
@@ -146,6 +166,16 @@ def from_html(html: str, parser: str | None = None) -> Any:
     return items[0] if len(items) == 1 else items
 
 
+def is_collection(value: Any) -> bool:
+    """Is this a group of children to flatten, rather than one child?
+
+    Deliberately a whitelist. Testing for Iterable would walk anything with
+    ``__iter__``, and Django's lazy translation proxies have one, so
+    ``Div(gettext_lazy("Hi"))`` would render one Text per character.
+    """
+    return isinstance(value, (list, tuple, set, frozenset, Iterator, range))
+
+
 def is_field_payload(children: tuple[Any, ...], attrs: dict[str, Any]) -> bool:
     """Is this ``__init__`` call Pydantic re-validating a serialized Tag?
 
@@ -166,18 +196,23 @@ def iter_children(children: Iterable[Any]) -> Iterator[HtmlItem]:
     """Coerce arbitrary children into HtmlItems.
 
     ``None`` and ``False`` are dropped so inline conditionals work
-    (``Div(user and P(user.name))``); lists, tuples, and generators are
-    flattened so comprehensions can be splatted in; everything else is
-    escaped as text.
+    (``Div(user and P(user.name))``); collections are flattened so
+    comprehensions can be splatted in; anything implementing ``__html__``
+    (a Django SafeString, a markupsafe Markup) is trusted as markup; and
+    everything else is escaped as text.
     """
     for child in children:
         if child is None or child is False:
             continue
         if isinstance(child, HtmlItem):
             yield child
-        elif isinstance(child, Iterable) and not isinstance(child, (str, bytes, dict)):
+        elif hasattr(child, "__html__"):
+            # Already-safe markup from Django, Jinja2, or another library.
+            yield Raw(content=child.__html__())
+        elif is_collection(child):
             yield from iter_children(child)
         else:
+            # str() resolves lazy objects, such as Django's gettext_lazy.
             yield Text(content=str(child))
 
 
@@ -354,12 +389,7 @@ class HtmlItem(BaseModel):
 
     def render(self) -> str:
         """Render to a string, marked safe when Django is installed."""
-        html = str(self)
-        try:
-            from django.utils.safestring import mark_safe
-        except ImportError:
-            return html
-        return mark_safe(html)
+        return str(self)
 
 
 class Comment(HtmlItem):
@@ -369,7 +399,7 @@ class Comment(HtmlItem):
     content: str
 
     def __str__(self) -> str:
-        return f"<!--{self.content.replace('--', '- -')}-->"
+        return marker()(f"<!--{self.content.replace('--', '- -')}-->")
 
 
 class Raw(HtmlItem):
@@ -382,7 +412,7 @@ class Raw(HtmlItem):
     content: str
 
     def __str__(self) -> str:
-        return self.content
+        return marker()(self.content)
 
 
 class Tag(HtmlItem):
@@ -434,6 +464,27 @@ class Tag(HtmlItem):
             if isinstance(child, (Text, Tag))
         )
 
+    @classmethod
+    def model_validate(cls, obj: Any, **kwargs: Any) -> Tag:
+        """Validate, restoring the element class named by ``tag``.
+
+        Children go through as_html_item, but the root is built by whichever
+        class was asked, so ``Tag.model_validate`` would flatten a Div into a
+        plain Tag without this.
+        """
+        if cls is Tag and isinstance(obj, dict):
+            target = TAG_CLASSES.get(obj.get("tag"))
+            if target is not None:
+                return target.model_validate(obj, **kwargs)
+        return super().model_validate(obj, **kwargs)
+
+    @classmethod
+    def model_validate_json(cls, json_data: str | bytes, **kwargs: Any) -> Tag:
+        """Parse JSON, restoring the element class named by ``tag``."""
+        if cls is Tag:
+            return cls.model_validate(json.loads(json_data), **kwargs)
+        return super().model_validate_json(json_data, **kwargs)
+
     def find(self, tag: str | None = None, **attrs: Any) -> Tag | None:
         """The first descendant tag matching, or None."""
         return next(iter(self.find_all(tag, **attrs)), None)
@@ -473,12 +524,12 @@ class Tag(HtmlItem):
     def __str__(self) -> str:
         attrs = render_attrs(self.attrs)
         if self.is_void:
-            return f"<{self.tag}{attrs} />"
+            return marker()(f"<{self.tag}{attrs} />")
         if self.is_raw_text:
             children = self.render_raw_text()
         else:
             children = "".join(str(child) for child in self.children)
-        return f"<{self.tag}{attrs}>{children}</{self.tag}>"
+        return marker()(f"<{self.tag}{attrs}>{children}</{self.tag}>")
 
     def render_raw_text(self) -> str:
         """Render <script>/<style> content without HTML-escaping it.
@@ -506,7 +557,7 @@ class Text(HtmlItem):
     content: str
 
     def __str__(self) -> str:
-        return escape(self.content)
+        return marker()(escape(self.content))
 
 
 ITEM_CLASSES.update({"comment": Comment, "raw": Raw, "tag": Tag, "text": Text})
