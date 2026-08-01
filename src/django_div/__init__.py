@@ -55,7 +55,7 @@ __all__ = [
     # Generated tag classes are appended at the bottom of this module.
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 #: What an attribute name may look like, per the WHATWG HTML syntax rules:
