@@ -100,7 +100,10 @@ Unescaped markup. `Raw(content="<b>x</b>")` renders as-is.
 
 ### `Comment`
 
-`Comment(content="note")` renders `<!--note-->`.
+`Comment(content="note")` renders `<!--note-->`. Comment syntax rules are
+neutralized on render: `--` becomes `- -`, a leading `>`/`->` and a trailing
+`-` are padded with a space — HTML5 would otherwise read the comment as
+closed early and parse the remainder as live markup.
 
 ## Functions
 

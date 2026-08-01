@@ -405,3 +405,21 @@ def test_iter_find_is_lazy():
     tree = Div(P("hit"), P("later"))
     found = tree.iter_find("p")
     assert next(found).text == "hit"
+
+
+def test_comment_cannot_break_out():
+    # HTML5 reads <!--> and <!---> as complete comments, so content starting
+    # with > or -> would leave the rest parsing as live markup.
+    assert str(Comment(content="><script>alert(1)</script>")) == (
+        "<!-- ><script>alert(1)</script>-->"
+    )
+    assert str(Comment(content="-><b>x</b>")) == "<!-- -><b>x</b>-->"
+
+
+def test_comment_trailing_dash_is_padded():
+    # <!--x---> is invalid comment syntax; a space keeps it well-formed.
+    assert str(Comment(content="x-")) == "<!--x- -->"
+
+
+def test_ordinary_comments_are_untouched():
+    assert str(Comment(content="a note")) == "<!--a note-->"

@@ -421,13 +421,25 @@ class HtmlItem(BaseModel):
 
 
 class Comment(HtmlItem):
-    """An HTML comment."""
+    """An HTML comment.
+
+    Comment text has three syntax rules, each neutralized on render rather
+    than escaped, since a comment is not an escaping context: it must not
+    contain ``--`` (would end the comment early), must not start with ``>``
+    or ``->`` (HTML5 reads ``<!-->`` and ``<!--->`` as complete comments, so
+    the rest would parse as live markup), and must not end with ``-``.
+    """
 
     type: Literal["comment"] = "comment"
     content: str
 
     def __str__(self) -> str:
-        return marker()(f"<!--{self.content.replace('--', '- -')}-->")
+        content = self.content.replace("--", "- -")
+        if content.startswith((">", "->")):
+            content = " " + content
+        if content.endswith("-"):
+            content += " "
+        return marker()(f"<!--{content}-->")
 
 
 class Raw(HtmlItem):
