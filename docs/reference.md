@@ -3,14 +3,30 @@
 ## Conventions
 
 Public functions take **at most one positional argument**; everything else is
-keyword-only. Tag constructors are the exception — their positional arguments
-are variadic children, not options.
+keyword-only.
 
 ```python
 from_html(markup, parser="lxml")     # not from_html(markup, "lxml")
 ```
 
-A test enforces this, so it stays true.
+Tag constructors reach the same place by a different route. Their positional
+arguments are variadic children, and Python makes everything after `*children`
+keyword-only, so anything you name is an attribute:
+
+```python
+Div(H1("Title"), P("Body"), class_="card")
+#   \________ children ________/  \_ attrs _/
+```
+
+On the generic `Tag`, the element name is positional-**only**, which keeps
+every possible attribute name free — including `tag` itself:
+
+```python
+Tag("div", tag="value")     # <div tag="value"></div>
+Tag(_tag="div")             # TypeError
+```
+
+Tests enforce both halves across every element class, so this stays true.
 
 ## Items
 

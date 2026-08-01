@@ -309,8 +309,9 @@ def test_public_functions_take_at_most_one_positional_argument():
     """Everything after the first argument is keyword-only.
 
     Named arguments read better at the call site and can be reordered or
-    added without breaking anyone. Tag constructors are exempt: their
-    positional arguments are variadic children, not options.
+    added without breaking anyone. Tag constructors follow the same rule by
+    a different route: their positionals are variadic children, so anything
+    named is an attribute. See test_tags.py for that half.
     """
     import inspect
 

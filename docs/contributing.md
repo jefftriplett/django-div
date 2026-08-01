@@ -48,9 +48,13 @@ docs/                        this site
 sorted, subject to Python needing base classes and helpers defined first.
 
 **One positional argument.** Public functions take at most one positional
-argument; everything else is keyword-only. Tag constructors are exempt, since
-their positional arguments are variadic children.
-`test_public_functions_take_at_most_one_positional_argument` enforces this.
+argument; everything else is keyword-only, enforced by
+`test_public_functions_take_at_most_one_positional_argument`.
+
+Tag constructors land in the same place differently: their positionals are
+variadic children, so Python makes every named argument keyword-only, and the
+generic `Tag` takes its element name positional-only. `test_tags.py` checks
+the constructor shape of every element class.
 
 **Comments explain why.** The what is in the code. Comments are for the
 reason a thing is the way it is — usually a Pydantic or HTML constraint that

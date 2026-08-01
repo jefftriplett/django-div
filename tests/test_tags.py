@@ -247,3 +247,57 @@ def test_tag_round_trips_through_json(tag):
     restored = Tag.model_validate_json(item.model_dump_json())
     assert isinstance(restored, TAG_CLASSES[tag])
     assert str(restored) == str(item)
+
+
+# --- constructor shape ------------------------------------------------------
+
+
+@pytest.mark.parametrize("tag", TAGS)
+def test_tag_constructor_takes_children_positionally_and_attrs_by_keyword(tag):
+    """Children are variadic positional; everything named is an attribute.
+
+    Python guarantees that anything after *children is keyword-only, so this
+    checks the signature has not grown a plain positional parameter that
+    would quietly accept an attribute by position.
+    """
+    import inspect
+
+    kinds = [
+        parameter.kind
+        for name, parameter in inspect.signature(
+            TAG_CLASSES[tag].__init__
+        ).parameters.items()
+        if name != "self"
+    ]
+    assert kinds == [
+        inspect.Parameter.VAR_POSITIONAL,
+        inspect.Parameter.VAR_KEYWORD,
+    ]
+
+
+@pytest.mark.parametrize("tag", TAGS)
+def test_attributes_cannot_be_passed_positionally(tag):
+    cls = TAG_CLASSES[tag]
+    # A second positional is another child, never an attribute value.
+    item = cls("a", "b") if tag not in VOID_TAGS else cls()
+    assert item.attrs == {}
+
+
+def test_generic_tag_name_is_positional_only():
+    """So that "tag" stays usable as an attribute name."""
+    import inspect
+
+    parameters = inspect.signature(Tag.__init__).parameters
+    assert parameters["_tag"].kind is inspect.Parameter.POSITIONAL_ONLY
+
+    with pytest.raises(TypeError):
+        Tag(_tag="div")
+
+
+def test_tag_named_attribute_is_not_swallowed():
+    assert str(Tag("div", tag="value")) == '<div tag="value"></div>'
+
+
+def test_generic_tag_without_a_name_says_so():
+    with pytest.raises(TypeError, match="first positional argument"):
+        Tag()

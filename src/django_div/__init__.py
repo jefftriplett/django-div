@@ -435,10 +435,21 @@ class Tag(HtmlItem):
     ] = Field(default_factory=list)
     attrs: dict[str, Any] = Field(default_factory=dict)
 
-    def __init__(self, _tag: str | None = None, *children: Any, **attrs: Any) -> None:
+    def __init__(
+        self, _tag: str | None = None, /, *children: Any, **attrs: Any
+    ) -> None:
+        # _tag is positional-only and children are variadic, so everything a
+        # caller names is an attribute. That frees every possible attribute
+        # name, including "tag", and makes the rule enforced by the signature
+        # rather than by convention.
         if is_field_payload(children, attrs=attrs):
             super().__init__(**attrs)
             return
+        if _tag is None:
+            raise TypeError(
+                "Tag() needs an element name as its first positional argument, "
+                "as in Tag('div', ...)"
+            )
         items = list(iter_children(children))
         if items and _tag in VOID_TAGS:
             # Rendering would drop them silently, which hides the mistake.
