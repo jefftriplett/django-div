@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.urls]
-Documentation = "https://jefftriplett.github.io/django-div/"
+Documentation = "https://django-div.readthedocs.io/en/latest/"
 Repository = "https://github.com/jefftriplett/django-div"
 Issues = "https://github.com/jefftriplett/django-div/issues"
 

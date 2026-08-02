@@ -93,10 +93,10 @@ format, a Markdown convention suited to LLMs and AI coding assistants.
 
 Two files are published:
 
-- [`llms.txt`](https://jefftriplett.github.io/django-div/llms.txt): a short
+- [`llms.txt`](https://django-div.readthedocs.io/en/latest/llms.txt): a short
   description of the project plus links to each section. The structure is
   described [here](https://llmstxt.org/#format).
-- [`llms-full.txt`](https://jefftriplett.github.io/django-div/llms-full.txt):
+- [`llms-full.txt`](https://django-div.readthedocs.io/en/latest/llms-full.txt):
   the same index with the content of every page inlined.
 
 Every page is also published as Markdown alongside its HTML, so you can point
@@ -104,8 +104,8 @@ an assistant at a single section rather than the whole corpus. Append `.md` to
 the page name:
 
 ```
-https://jefftriplett.github.io/django-div/building.md
-https://jefftriplett.github.io/django-div/django.md
+https://django-div.readthedocs.io/en/latest/building.md
+https://django-div.readthedocs.io/en/latest/django.md
 ```
 
 ## Where to next

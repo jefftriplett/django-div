@@ -2,7 +2,7 @@
 site_name = "django-div"
 site_description = "Build and parse HTML in Python with Pydantic models"
 site_author = "Jeff Triplett"
-site_url = "https://jefftriplett.github.io/django-div/"
+site_url = "https://django-div.readthedocs.io/en/latest/"
 repo_url = "https://github.com/jefftriplett/django-div"
 repo_name = "jefftriplett/django-div"
 copyright = "Copyright &copy; 2026 Jeff Triplett"
