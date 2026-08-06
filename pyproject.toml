@@ -12,6 +12,9 @@ keywords = ["django", "html", "pydantic", "templates"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Framework :: Django :: 6.0",
+    "Framework :: Django :: 6.1",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
