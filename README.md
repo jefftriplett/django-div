@@ -1,5 +1,7 @@
 # django-div
 
+[![PyPI](https://img.shields.io/pypi/v/django-div.svg)](https://pypi.org/project/django-div/)
+
 Build and parse HTML in Python with Pydantic models.
 
 **[Documentation](https://django-div.readthedocs.io/en/latest/)**
