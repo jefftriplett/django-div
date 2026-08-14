@@ -1,6 +1,6 @@
 [project]
 name = "django-div"
-version = "2026.8.1"
+version = "2026.8.2"
 description = "Build and parse HTML in Python with Pydantic models"
 readme = "README.md"
 authors = [
@@ -79,7 +79,7 @@ build-backend = "uv_build"
 source-include = ["CHANGELOG.md"]
 
 [tool.bumpver]
-current_version = "2026.8.1"
+current_version = "2026.8.2"
 # CalVer, YYYY.M.N: unpadded month, micro 1-based per release within the month
 version_pattern = "YYYY.MM.INC1"
 commit_message = ":bookmark: bump version {old_version} -> {new_version}"
