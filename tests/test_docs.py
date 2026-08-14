@@ -53,3 +53,27 @@ def test_documented_extras_match_pyproject():
         page = read(name)
         for extra in extras:
             assert f"django-div[{extra}]" in page, f"{name}: {extra}"
+
+
+def read_changelog_versions():
+    """Version headings in CHANGELOG.md, newest first, as (version, date)."""
+    body = read("CHANGELOG.md")
+    return re.findall(r"^## (\d+\.\d+\.\d+) - (\d{4}-\d{2}-\d{2})$", body, re.MULTILINE)
+
+
+def test_changelog_covers_the_current_version():
+    """A bump without a changelog entry fails before the release publishes."""
+    metadata = tomllib.loads(read("pyproject.toml"))
+    version = metadata["project"]["version"]
+    assert version in [v for v, _ in read_changelog_versions()], version
+
+
+def test_changelog_keeps_an_unreleased_section():
+    assert "\n## Unreleased\n" in read("CHANGELOG.md")
+
+
+def test_changelog_versions_are_newest_first():
+    versions = [
+        tuple(int(part) for part in v.split(".")) for v, _ in read_changelog_versions()
+    ]
+    assert versions == sorted(versions, reverse=True)
