@@ -37,7 +37,34 @@ dropped, and remaining underscores become hyphens.
 | `hx_get="/rows"` | `hx-get="/rows"` |
 | `http_equiv="refresh"` | `http-equiv="refresh"` |
 
-Names that can't be derived by those rules live in `ATTR_OVERRIDES`.
+### Reserved words
+
+The trailing underscore also covers every Python keyword. Add one underscore
+to the end of the keyword, and the rule removes it again on render.
+
+| Python | HTML | Where it applies |
+| --- | --- | --- |
+| `class_` | `class` | every element |
+| `for_` | `for` | `<label>`, `<output>` |
+| `as_` | `as` | `<link>` |
+| `async_` | `async` | `<script>` |
+| `is_` | `is` | custom elements |
+| `in_` | `in` | SVG filters |
+| `from_` | `from` | SVG `<animate>` |
+
+Soft keywords need no underscore. Python accepts `type`, `match`, and `case`
+as argument names, so write `Input(type="checkbox")` directly.
+
+An attribute name that is not a Python identifier cannot be a keyword
+argument. Pass a dictionary instead, and the name goes through unchanged:
+
+```python
+Div(**{"hx-on:click": "alert(1)", "@click": "open = true"})
+```
+
+`ATTR_OVERRIDES` holds an explicit table of the irregular spellings. The
+default rule already derives each one, so the table documents the mapping
+rather than correcting it.
 
 ### Boolean attributes
 

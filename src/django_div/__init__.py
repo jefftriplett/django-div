@@ -67,7 +67,9 @@ __version__ = "2026.8.1"
 #: could smuggle a second attribute into the output and must be refused.
 ATTR_NAME_RE = re.compile(r'^[^\s"\'>/=\x00-\x1f\x7f]+$')
 
-#: Attribute names whose Python spelling can't be derived by the normal rules.
+#: Explicit spellings for the irregular attribute names. The rule in
+#: ``normalize_attr`` already derives every one of them, so this table
+#: documents the mapping rather than correcting it.
 ATTR_OVERRIDES = {
     "accept_charset": "accept-charset",
     "as_": "as",
