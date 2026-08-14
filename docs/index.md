@@ -54,8 +54,10 @@ Pydantic model, which means the same objects can go in three directions:
 uv add django-div            # building only
 uv add 'django-div[parse]'   # plus from_html()/parse(), via bs4 + lxml
 uv add 'django-div[html5]'   # spec-exact parsing, ~3x slower than lxml
+uv add 'django-div[markdown]' # plus from_markdown(), via markdown-it-py
 ```
 
+django-div needs Python 3.12 or later.
 Pydantic is the only hard dependency. Parsers are optional and their imports
 are guarded, so building HTML pulls in nothing else. Django is optional too:
 only `django_div.django` imports it.

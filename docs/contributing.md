@@ -107,6 +107,10 @@ nav is appended alphabetically rather than dropped.
 
 ## CI
 
-`.github/workflows/test.yml` runs pytest on Python 3.10 through 3.14 plus
-lint. `.github/workflows/docs.yml` builds and deploys the docs on pushes to
-`main`.
+`.github/workflows/test.yml` runs pytest on Python 3.12, 3.13, 3.14, and
+3.15, including the free-threaded builds `3.14t` and `3.15t`. The same file
+runs lint.
+
+Read the Docs builds and deploys the documentation. `.readthedocs.yaml`
+configures it, and it runs the same `zensical build` plus `gen_llms.py` steps
+as `just docs-build`.
