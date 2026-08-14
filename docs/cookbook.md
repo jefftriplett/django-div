@@ -136,6 +136,41 @@ def icon(name, size=16):
 <svg width="16" height="16" aria-hidden="true"><use href="/static/icons.svg#check"></use></svg>
 ```
 
+### Inline SVG shapes
+
+SVG attribute names are case-sensitive, and a name without an underscore
+passes through untouched, so `viewBox` renders as `viewBox`. Underscores
+still become hyphens, which is what `stroke_width` needs:
+
+```python
+Svg = tag_class("svg")
+Circle = tag_class("circle")
+Path = tag_class("path")
+
+check = Svg(
+    Circle(cx="12", cy="12", r="10", fill="none"),
+    Path(d="M8 12l3 3 5-6"),
+    viewBox="0 0 24 24", width=24, height=24,
+    stroke="currentColor", stroke_width="2", aria_hidden="true",
+)
+```
+
+```html
+<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none"></circle><path d="M8 12l3 3 5-6"></path></svg>
+```
+
+Shapes render as a full open and close pair, never self-closed, because only
+HTML void elements self-close. A browser accepts `<path></path>` in inline
+SVG.
+
+!!! warning "Parsing SVG loses the attribute case"
+
+    Building SVG keeps `viewBox`. Reading it back does not: an HTML parser
+    folds every attribute name to lowercase, so `from_html` returns
+    `viewbox`, which a browser ignores. The same applies to
+    `preserveAspectRatio`, `gradientUnits`, and the other camelCase names.
+    Treat SVG as write-only, or repair the names yourself after a parse.
+
 ### XML, not just HTML
 
 `Tag` doesn't care whether a name is HTML, so feeds and other XML work:

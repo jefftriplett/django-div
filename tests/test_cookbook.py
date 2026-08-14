@@ -150,6 +150,35 @@ def test_svg_icon():
     )
 
 
+def test_inline_svg_keeps_the_attribute_case():
+    Svg = tag_class("svg")
+    Circle = tag_class("circle")
+    Path = tag_class("path")
+    check = Svg(
+        Circle(cx="12", cy="12", r="10", fill="none"),
+        Path(d="M8 12l3 3 5-6"),
+        viewBox="0 0 24 24",
+        width=24,
+        height=24,
+        stroke="currentColor",
+        stroke_width="2",
+        aria_hidden="true",
+    )
+    assert str(check) == (
+        '<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor"'
+        ' stroke-width="2" aria-hidden="true">'
+        '<circle cx="12" cy="12" r="10" fill="none"></circle>'
+        '<path d="M8 12l3 3 5-6"></path></svg>'
+    )
+
+
+def test_parsing_svg_lowercases_the_attribute_case():
+    """The documented limit: an HTML parser folds viewBox to viewbox."""
+    assert from_html('<svg viewBox="0 0 24 24"></svg>').attrs == {
+        "viewbox": "0 0 24 24"
+    }
+
+
 def test_xml_with_generic_tag():
     feed = Tag(
         "rss",

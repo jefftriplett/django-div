@@ -139,3 +139,14 @@ Parsing is a tree conversion, not a browser. A few things to expect:
   by the parser before django-div sees them.
 - Malformed markup is repaired according to whichever backend is in use, so
   round-tripping broken HTML gives you the repaired version.
+- Attribute names come back lowercased, because that is what an HTML parser
+  does. This matters for inline SVG and MathML only, where names are
+  case-sensitive:
+
+```python
+from_html('<svg viewBox="0 0 24 24"></svg>').attrs
+# {'viewbox': '0 0 24 24'}   a browser ignores this spelling
+```
+
+  Building SVG keeps the case. Reading it back does not, so repair the names
+  yourself if you must round-trip inline SVG.
