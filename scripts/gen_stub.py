@@ -34,7 +34,6 @@ from pydantic import BaseModel
 __version__: str
 
 ATTR_NAME_RE: re.Pattern[str]
-ATTR_OVERRIDES: dict[str, str]
 BUILTIN_TAGS: frozenset[str]
 DOCUMENT_ELEMENTS: frozenset[str]
 ITEM_CLASSES: dict[str, type[HtmlItem]]

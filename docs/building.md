@@ -62,9 +62,8 @@ argument. Pass a dictionary instead, and the name goes through unchanged:
 Div(**{"hx-on:click": "alert(1)", "@click": "open = true"})
 ```
 
-`ATTR_OVERRIDES` holds an explicit table of the irregular spellings. The
-default rule already derives each one, so the table documents the mapping
-rather than correcting it.
+There is no exception table. The rule above derives every attribute name on
+its own.
 
 ### Boolean attributes
 

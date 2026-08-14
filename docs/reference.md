@@ -160,7 +160,6 @@ closed early and parse the remainder as live markup.
 | `RAW_TEXT_ELEMENTS` | `script`, `style` |
 | `PRE_ELEMENTS` | `pre`, `textarea` |
 | `DOCUMENT_ELEMENTS` | `html`, `head`, `body` |
-| `ATTR_OVERRIDES` | Explicit table of the irregular attribute spellings |
 | `ATTR_NAME_RE` | What a rendered attribute name may look like |
 | `PARSERS` | Parser preference order |
 

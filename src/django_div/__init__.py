@@ -30,7 +30,6 @@ from pydantic import BaseModel, BeforeValidator, Field, SerializeAsAny
 
 __all__ = [
     "ATTR_NAME_RE",
-    "ATTR_OVERRIDES",
     "BUILTIN_TAGS",
     "DOCUMENT_ELEMENTS",
     "ITEM_CLASSES",
@@ -66,21 +65,6 @@ __version__ = "2026.8.1"
 #: are escaped on render; names cannot be, so a name that fails this pattern
 #: could smuggle a second attribute into the output and must be refused.
 ATTR_NAME_RE = re.compile(r'^[^\s"\'>/=\x00-\x1f\x7f]+$')
-
-#: Explicit spellings for the irregular attribute names. The rule in
-#: ``normalize_attr`` already derives every one of them, so this table
-#: documents the mapping rather than correcting it.
-ATTR_OVERRIDES = {
-    "accept_charset": "accept-charset",
-    "as_": "as",
-    "async_": "async",
-    "class_": "class",
-    "del_": "del",
-    "for_": "for",
-    "http_equiv": "http-equiv",
-    "in_": "in",
-    "is_": "is",
-}
 
 #: Wrappers a parser may invent around a fragment.
 DOCUMENT_ELEMENTS = frozenset({"body", "head", "html"})
@@ -238,10 +222,10 @@ def iter_children(children: Iterable[Any]) -> Iterator[HtmlItem]:
 def normalize_attr(name: str) -> str:
     """Turn a Python keyword name into its HTML attribute spelling.
 
-    ``class_`` -> ``class``, ``data_test_id`` -> ``data-test-id``.
+    ``class_`` -> ``class``, ``data_test_id`` -> ``data-test-id``. One
+    trailing underscore is dropped, so every Python keyword is reachable as
+    ``keyword_``; the remaining underscores become hyphens.
     """
-    if name in ATTR_OVERRIDES:
-        return ATTR_OVERRIDES[name]
     return name.removesuffix("_").replace("_", "-")
 
 
