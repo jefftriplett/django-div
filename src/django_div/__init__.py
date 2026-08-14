@@ -439,7 +439,7 @@ class Comment(HtmlItem):
 class Doctype(HtmlItem):
     """A document type declaration. Defaults to the HTML5 doctype.
 
-    ``content`` is what follows ``<!DOCTYPE`` — ``html`` for every modern
+    ``content`` is what follows ``<!DOCTYPE``: ``html`` for every modern
     document, or a legacy public/system identifier string when parsing old
     markup. A ``>`` in the content would end the declaration early and leak
     the rest into the document, so rendering refuses it.

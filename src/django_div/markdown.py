@@ -430,7 +430,7 @@ def _table_parts(
 ) -> tuple[Tag | None, list[Tag], list[Tag], list[Tag]]:
     """Split a table into caption and thead/body/tfoot rows.
 
-    Only direct structure is read — never find_all — so rows of a nested
+    Only direct structure is read, never find_all, so rows of a nested
     table stay inside their own table instead of leaking into this one.
     """
     caption = None

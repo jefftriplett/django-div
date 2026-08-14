@@ -9,7 +9,7 @@ use Zensical syntax that means nothing outside the renderer: admonitions
 markers. Rendering first turns them into prose.
 
 The HTML-to-Markdown conversion itself is ``django_div.markdown.to_markdown``
-over a ``parse()`` tree — the library run on its own docs, so a conversion
+over a ``parse()`` tree. The library runs on its own docs, so a conversion
 regression breaks this site's build before it reaches anyone else. This
 script only selects the ``<article>``, prunes page furniture, and assembles
 the llms.txt files.

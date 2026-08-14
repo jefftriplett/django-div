@@ -3,7 +3,7 @@
 The generator reads rendered HTML, so these tests feed it HTML directly
 rather than shelling out to a site build. The HTML-to-Markdown conversion
 itself lives in django_div.markdown and is tested there; these cover what
-the script adds on top — article selection, pruning, and configuration.
+the script adds on top: article selection, pruning, and configuration.
 """
 
 import pytest
