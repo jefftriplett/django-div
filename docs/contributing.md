@@ -127,7 +127,8 @@ at 1 for each release within that month. `bumpver` owns the number, and its
 configuration lives in `[tool.bumpver]`. It writes the version into
 `pyproject.toml` and `src/django_div/__init__.py`, which a test compares.
 
-Check what a bump would produce, then run it:
+Move the `Unreleased` entries in `CHANGELOG.md` under the new version number
+first. Then check what a bump would produce, and run it:
 
 ```console
 just bump-dry

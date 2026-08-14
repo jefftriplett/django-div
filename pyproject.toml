@@ -7,7 +7,8 @@ authors = [
     { name = "Jeff Triplett", email = "jeff.triplett@gmail.com" }
 ]
 requires-python = ">=3.12"
-license = "MIT"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 keywords = ["django", "html", "pydantic", "templates"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -30,6 +31,7 @@ dependencies = [
 
 [project.urls]
 Documentation = "https://django-div.readthedocs.io/en/latest/"
+Changelog = "https://github.com/jefftriplett/django-div/blob/main/CHANGELOG.md"
 Repository = "https://github.com/jefftriplett/django-div"
 Issues = "https://github.com/jefftriplett/django-div/issues"
 
@@ -71,6 +73,10 @@ dev = [
 [build-system]
 requires = ["uv_build>=0.11.29,<0.12.0"]
 build-backend = "uv_build"
+
+# the changelog is not a default sdist include, but it belongs in the archive
+[tool.uv.build-backend]
+source-include = ["CHANGELOG.md"]
 
 [tool.bumpver]
 current_version = "2026.8.1"
