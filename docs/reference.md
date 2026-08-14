@@ -183,6 +183,129 @@ right page.
 Tests are parametrized over `TAG_CLASSES`, so every element is checked for
 rendering, attributes, category behavior, and both round trips.
 
+### All elements
+
+The **Notes** column marks the three behavior sets: `void` elements
+self-close and take no children, `raw text` content is never escaped, and
+`pre` content keeps its whitespace verbatim.
+
+| Class | Tag | Notes |
+| --- | --- | --- |
+| `A` | `<a>` |  |
+| `Abbr` | `<abbr>` |  |
+| `Address` | `<address>` |  |
+| `Area` | `<area>` | void |
+| `Article` | `<article>` |  |
+| `Aside` | `<aside>` |  |
+| `Audio` | `<audio>` |  |
+| `B` | `<b>` |  |
+| `Base` | `<base>` | void |
+| `Bdi` | `<bdi>` |  |
+| `Bdo` | `<bdo>` |  |
+| `Blockquote` | `<blockquote>` |  |
+| `Body` | `<body>` |  |
+| `Br` | `<br>` | void |
+| `Button` | `<button>` |  |
+| `Canvas` | `<canvas>` |  |
+| `Caption` | `<caption>` |  |
+| `Cite` | `<cite>` |  |
+| `Code` | `<code>` |  |
+| `Col` | `<col>` | void |
+| `Colgroup` | `<colgroup>` |  |
+| `Data` | `<data>` |  |
+| `Datalist` | `<datalist>` |  |
+| `Dd` | `<dd>` |  |
+| `Del` | `<del>` |  |
+| `Details` | `<details>` |  |
+| `Dfn` | `<dfn>` |  |
+| `Dialog` | `<dialog>` |  |
+| `Div` | `<div>` |  |
+| `Dl` | `<dl>` |  |
+| `Dt` | `<dt>` |  |
+| `Em` | `<em>` |  |
+| `Embed` | `<embed>` | void |
+| `Fieldset` | `<fieldset>` |  |
+| `Figcaption` | `<figcaption>` |  |
+| `Figure` | `<figure>` |  |
+| `Footer` | `<footer>` |  |
+| `Form` | `<form>` |  |
+| `H1` | `<h1>` |  |
+| `H2` | `<h2>` |  |
+| `H3` | `<h3>` |  |
+| `H4` | `<h4>` |  |
+| `H5` | `<h5>` |  |
+| `H6` | `<h6>` |  |
+| `Head` | `<head>` |  |
+| `Header` | `<header>` |  |
+| `Hgroup` | `<hgroup>` |  |
+| `Hr` | `<hr>` | void |
+| `Html` | `<html>` |  |
+| `I` | `<i>` |  |
+| `Iframe` | `<iframe>` |  |
+| `Img` | `<img>` | void |
+| `Input` | `<input>` | void |
+| `Ins` | `<ins>` |  |
+| `Kbd` | `<kbd>` |  |
+| `Label` | `<label>` |  |
+| `Legend` | `<legend>` |  |
+| `Li` | `<li>` |  |
+| `Link` | `<link>` | void |
+| `Main` | `<main>` |  |
+| `Map` | `<map>` |  |
+| `Mark` | `<mark>` |  |
+| `Menu` | `<menu>` |  |
+| `Meta` | `<meta>` | void |
+| `Meter` | `<meter>` |  |
+| `Nav` | `<nav>` |  |
+| `Noscript` | `<noscript>` |  |
+| `Object` | `<object>` |  |
+| `Ol` | `<ol>` |  |
+| `Optgroup` | `<optgroup>` |  |
+| `Option` | `<option>` |  |
+| `Output` | `<output>` |  |
+| `P` | `<p>` |  |
+| `Param` | `<param>` | void |
+| `Picture` | `<picture>` |  |
+| `Pre` | `<pre>` | pre |
+| `Progress` | `<progress>` |  |
+| `Q` | `<q>` |  |
+| `Rp` | `<rp>` |  |
+| `Rt` | `<rt>` |  |
+| `Ruby` | `<ruby>` |  |
+| `S` | `<s>` |  |
+| `Samp` | `<samp>` |  |
+| `Script` | `<script>` | raw text |
+| `Search` | `<search>` |  |
+| `Section` | `<section>` |  |
+| `Select` | `<select>` |  |
+| `Selectedcontent` | `<selectedcontent>` |  |
+| `Slot` | `<slot>` |  |
+| `Small` | `<small>` |  |
+| `Source` | `<source>` | void |
+| `Span` | `<span>` |  |
+| `Strong` | `<strong>` |  |
+| `Style` | `<style>` | raw text |
+| `Sub` | `<sub>` |  |
+| `Summary` | `<summary>` |  |
+| `Sup` | `<sup>` |  |
+| `Table` | `<table>` |  |
+| `Tbody` | `<tbody>` |  |
+| `Td` | `<td>` |  |
+| `Template` | `<template>` |  |
+| `Textarea` | `<textarea>` | pre |
+| `Tfoot` | `<tfoot>` |  |
+| `Th` | `<th>` |  |
+| `Thead` | `<thead>` |  |
+| `Time` | `<time>` |  |
+| `Title` | `<title>` |  |
+| `Tr` | `<tr>` |  |
+| `Track` | `<track>` | void |
+| `U` | `<u>` |  |
+| `Ul` | `<ul>` |  |
+| `Var` | `<var>` |  |
+| `Video` | `<video>` |  |
+| `Wbr` | `<wbr>` | void |
+
 ## `django_div.markdown`
 
 `to_markdown(item)`

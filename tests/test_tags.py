@@ -338,6 +338,39 @@ def test_documented_element_count_matches_reality():
         assert claim in (root / name).read_text(), name
 
 
+def read_documented_elements():
+    """The 'All elements' table in docs/reference.md, as {tag: (class, notes)}."""
+    import pathlib
+    import re
+
+    root = pathlib.Path(__file__).parent.parent
+    text = (root / "docs/reference.md").read_text()
+    table = text.split("### All elements", 1)[1]
+    rows = re.findall(r"^\| `(\w+)` \| `<(\w+)>` \|([^|]*)\|$", table, re.MULTILINE)
+    return {tag: (cls, notes.strip()) for cls, tag, notes in rows}
+
+
+def test_documented_element_table_lists_every_tag():
+    """A new element fails here until docs/reference.md names it."""
+    assert set(read_documented_elements()) == BUILTIN_TAGS
+
+
+@pytest.mark.parametrize("tag", TAGS)
+def test_documented_element_table_matches_class_and_category(tag):
+    documented_class, notes = read_documented_elements()[tag]
+    assert documented_class == TAG_CLASSES[tag].__name__
+    expected = [
+        label
+        for label, members in (
+            ("void", VOID_ELEMENTS),
+            ("raw text", RAW_TEXT_ELEMENTS),
+            ("pre", PRE_ELEMENTS),
+        )
+        if tag in members
+    ]
+    assert notes == ", ".join(expected)
+
+
 @pytest.mark.parametrize("tag", TAGS)
 def test_builtin_docstrings_link_to_mdn(tag):
     assert (
