@@ -57,7 +57,7 @@ uv add 'django-div[html5]'   # spec-exact parsing, ~3x slower than lxml
 ```
 
 Pydantic is the only hard dependency. Parsers are optional and their imports
-are guarded, so building HTML pulls in nothing else. Django is optional too —
+are guarded, so building HTML pulls in nothing else. Django is optional too:
 only `django_div.django` imports it.
 
 ## A tour in one page
@@ -110,15 +110,15 @@ https://django-div.readthedocs.io/en/latest/django.md
 
 ## Where to next
 
-- [Building HTML](building.md) — elements, attributes, escaping, categories
-- [Parsing HTML](parsing.md) — `from_html()`, searching, editing, parsers
-- [Serializing](serializing.md) — JSON round trips
-- [Markdown](markdown.md) — render the tree as Markdown, read Markdown in
-- [Django](django.md) — components as templates, escaping interop
+- [Building HTML](building.md): elements, attributes, escaping, categories
+- [Parsing HTML](parsing.md): `from_html()`, searching, editing, parsers
+- [Serializing](serializing.md): JSON round trips
+- [Markdown](markdown.md): render the tree as Markdown, read Markdown in
+- [Django](django.md): components as templates, escaping interop
 - Cookbooks: [HTML](cookbook.md) · [Django](django-cookbook.md) ·
   [Markdown](markdown-cookbook.md)
-- [API reference](reference.md) — every function, class, and constant
-- [Contributing](contributing.md) — setup, conventions, tests
+- [API reference](reference.md): every function, class, and constant
+- [Contributing](contributing.md): setup, conventions, tests
 
 ## Where it came from
 

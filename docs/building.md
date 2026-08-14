@@ -1,7 +1,7 @@
 # Building HTML
 
 Every HTML element has a class, named after the tag with a capital letter:
-`Div`, `P`, `H1`, `Textarea` — all 114 elements of the
+`Div`, `P`, `H1`, `Textarea`. The set covers all 114 elements of the
 [WHATWG living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3),
 each documented on [MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Element).
 Children are positional arguments, attributes are keyword arguments.
@@ -177,14 +177,14 @@ Div(Raw(content="<b>bold</b>"))   # <div><b>bold</b></div>
 
     `Raw` bypasses escaping completely. Never build one from user input.
 
-Anything implementing the `__html__` protocol — a Django `SafeString`, a
-`markupsafe.Markup`, a rendered form — is trusted and passes through
+Anything implementing the `__html__` protocol (a Django `SafeString`, a
+`markupsafe.Markup`, a rendered form) is trusted and passes through
 unescaped, so interop with other libraries needs no special handling.
 
 ### Comments
 
 `Comment` renders an HTML comment. A comment is not an escaping context, so
-its content is not HTML-escaped — instead the three comment-syntax rules are
+its content is not HTML-escaped. Instead the three comment-syntax rules are
 neutralized on render, because each one would otherwise let content escape
 the comment:
 
@@ -197,7 +197,7 @@ Comment(content="x-")      # <!--x- -->
 
 - `--` inside a comment would end it early, so it becomes `- -`.
 - HTML5 reads `<!-->` and `<!--->` as *complete* comments, so a leading `>`
-  or `->` would leave the rest of the content parsing as live markup — for
+  or `->` would leave the rest of the content parsing as live markup. For
   untrusted content, that is script execution. A space is padded in front.
 - A trailing `-` would produce the invalid `<!--x--->`; a space is padded.
 
@@ -227,7 +227,7 @@ Br("text")
 ### Raw text elements
 
 `script` and `style` hold code, not text, so their content is **not**
-escaped. Escaping it would change what the code means — `if (a < b)` is not
+escaped. Escaping it would change what the code means: `if (a < b)` is not
 `if (a &lt; b)`.
 
 ```python
@@ -236,7 +236,7 @@ Style("a > b { color: red }")   # <style>a > b { color: red }</style>
 ```
 
 Because nothing escapes a raw text element except its own closing tag,
-content containing that closing tag would break out of the element — and for
+content containing that closing tag would break out of the element, and for
 a `<script>`, the rest would run as markup. django-div refuses rather than
 mangling it:
 
@@ -254,8 +254,8 @@ str(Script("</script><script>alert(1)</script>"))
 
 ### Preformatted elements
 
-`pre` and `textarea` have significant whitespace. This only affects parsing —
-see [Parsing HTML](parsing.md) — since building preserves exactly what you
+`pre` and `textarea` have significant whitespace. This only affects parsing (see
+[Parsing HTML](parsing.md)), since building preserves exactly what you
 pass.
 
 ## Elements not in the list

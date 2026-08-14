@@ -39,7 +39,7 @@ Div(P("x"), class_="card").model_dump()
 Two fields carry the type information:
 
 `type`
-:   Distinguishes the leaf kinds, which otherwise look identical — `Text`,
+:   Distinguishes the leaf kinds, which otherwise look identical: `Text`,
     `Raw`, and `Comment` all hold a single `content` string.
 
 `tag`
@@ -65,7 +65,7 @@ Div.model_validate(payload)         # forces Div, no dispatch
 ```
 
 Unknown tags fall back to the generic `Tag`, which still renders correctly.
-Registering the element first — with `tag_class()` — gets you the class back
+Registering the element first, with `tag_class()`, gets you the class back
 instead.
 
 ## What this is good for
@@ -75,7 +75,7 @@ classes. It buys a few things that string-building alone doesn't:
 
 - **Caching a rendered tree** as JSON, then reloading and patching part of it
   without re-parsing HTML.
-- **Sending markup across a boundary** — a queue, an API — as structured data
+- **Sending markup across a boundary** (a queue, an API) as structured data
   that can be validated on arrival rather than trusted as a string.
 - **Diffing two versions of a page** structurally instead of textually.
 - **Storing user-authored content** in a form you can inspect and constrain,

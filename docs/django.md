@@ -18,8 +18,8 @@ construction. A tag can go straight into a template context with no `|safe`:
     string *before* it looks for `__html__`. A plain `str` return would have
     been escaped, so `__str__` itself reports the result as safe.
 
-Interop runs the other way too. Anything carrying `__html__` — a
-`SafeString`, a `markupsafe.Markup`, a rendered form — passes through a tag
+Interop runs the other way too. Anything carrying `__html__` (a
+`SafeString`, a `markupsafe.Markup`, a rendered form) passes through a tag
 unescaped, while ordinary strings are still escaped:
 
 ```python
@@ -114,7 +114,7 @@ working, and you can convert one view at a time.
 !!! warning "Template names are import paths"
 
     `"myapp.components.home"` is imported and called. Never build a template
-    name from user input — that is an arbitrary-import primitive.
+    name from user input. That is an arbitrary-import primitive.
 
 ## Without the template layer
 
@@ -157,7 +157,7 @@ Div("hi").render()
 ## What this is not
 
 django-div does not replace Django's template language, and does not try to.
-There is no inheritance, no `{% block %}`, and no partial loading — a
+There is no inheritance, no `{% block %}`, and no partial loading. A
 component is a function, so composition is function calls and default
 arguments instead.
 

@@ -90,10 +90,10 @@ print(page)
 `parse()` is the underlying function and always returns a list;
 `from_html()` unwraps the single-root case.
 
-Both pick the best parser installed — `lxml`, then `html5lib`, then the
+Both pick the best parser installed: `lxml`, then `html5lib`, then the
 stdlib. That matters: the stdlib parser turns `<p>one<p>two` into *nested*
 paragraphs instead of closing the first, and lxml is also about 1.6x faster.
-Pass `parser=` to override. Fragments stay fragments — the `<html><body>`
+Pass `parser=` to override. Fragments stay fragments. The `<html><body>`
 skeleton lxml and html5lib invent is stripped unless the source asked for it.
 
 ## Serializing
@@ -154,7 +154,7 @@ def home_view(request):
 ```
 
 A component is any callable returning an `HtmlItem`. It receives the context
-as keyword arguments — the whole context if it declares `**kwargs`, otherwise
+as keyword arguments: the whole context if it declares `**kwargs`, otherwise
 only the parameters it names, so context processors can add `user` and friends
 without breaking every signature.
 
@@ -174,8 +174,8 @@ def form_view(request):
 
 Rendering escapes text and attribute values, so output is safe markup by
 construction and `{{ tag }}` works in a Django template with no `|safe`.
-Interop runs both ways: anything with `__html__` — a `SafeString`, a
-`markupsafe.Markup`, a rendered Django form — passes through a tag unescaped,
+Interop runs both ways: anything with `__html__` (a `SafeString`, a
+`markupsafe.Markup`, a rendered Django form) passes through a tag unescaped,
 while plain strings are still escaped.
 
 Lazy objects work too: `Div(gettext_lazy("Hello"))` resolves to one string

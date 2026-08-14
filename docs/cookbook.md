@@ -10,7 +10,7 @@ For Django-specific recipes, see the [Django cookbook](django-cookbook.md).
 ### A reusable component
 
 A component is a function. There is no registry, no base class, and no
-special syntax — composition is a function call.
+special syntax. Composition is a function call.
 
 ```python
 def card(title, *body, href=None):
@@ -113,7 +113,7 @@ MyWidget("hi", data_state="ready")
 
 `tag_class()` registers the result **globally**, in `TAG_CLASSES`, so parsing
 produces that class too. That is the point, but it means the registry grows at
-runtime — `BUILTIN_TAGS` is the fixed set this library ships. For a one-off
+runtime. `BUILTIN_TAGS` is the fixed set this library ships. For a one-off
 that shouldn't be registered, `Tag("my-widget", ...)` skips it.
 
 ### SVG icons
@@ -291,7 +291,7 @@ parse('<p onclick="evil()">ok <script>alert(1)</script><b>b</b></p>')
 
 !!! danger "This is not a sanitizer"
 
-    It is a shape filter for content you already trust — trimming a CMS
+    It is a shape filter for content you already trust: trimming a CMS
     export, normalizing pasted markup. It is **not** an XSS defense. Real
     sanitization has to handle `javascript:` URLs, CSS escapes, mutation
     XSS, and namespace confusion. For untrusted input use
@@ -311,7 +311,7 @@ tree = from_html("<article><h1>Title</h1><p>one two</p></article>")
 tree.text          # 'Titleone two'
 ```
 
-When you want something readable — search indexing, summaries — join the
+When you want something readable (search indexing, summaries), join the
 pieces yourself:
 
 ```python
@@ -355,8 +355,8 @@ def pretty(item, indent=0):
 ## Markdown
 
 The same tree renders as Markdown, and Markdown reads back in. Those
-recipes — changelog generation, link hardening, code-block extraction,
-document merging — have their own page: the
+recipes (changelog generation, link hardening, code-block extraction,
+document merging) have their own page: the
 [Markdown cookbook](markdown-cookbook.md).
 
 ## Serializing

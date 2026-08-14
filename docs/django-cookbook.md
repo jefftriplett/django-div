@@ -45,7 +45,7 @@ def badge(text, tone="info"):
 ### Passing a tag through the context
 
 A view can build a component and hand it to an ordinary template. No `|safe`
-is needed — see [escaping](django.md#escaping-both-directions).
+is needed. See [escaping](django.md#escaping-both-directions).
 
 ```python
 def dashboard(request):
@@ -225,8 +225,7 @@ breadcrumbs([("Home", "/"), ("Building", None)])
 
 ## Passing data to JavaScript
 
-`<script>` content is not escaped — it can't be, or the code would break —
-so JSON has to be escaped for the *element*, not for HTML:
+`<script>` content is not escaped, and it can't be, or the code would break, so JSON has to be escaped for the *element*, not for HTML:
 
 ```python
 import json

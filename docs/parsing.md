@@ -66,8 +66,8 @@ print(page)
 ## Choosing a parser
 
 Parsing goes through BeautifulSoup, which is a front end over several
-backends. django-div picks the best one installed — `lxml`, then `html5lib`,
-then the standard library — because they are not equivalent:
+backends. django-div picks the best one installed (`lxml`, then `html5lib`,
+then the standard library), because they are not equivalent:
 
 | Input | `html.parser` | `lxml` | `html5lib` |
 | --- | --- | --- | --- |
@@ -103,7 +103,7 @@ kept.
 ## Whitespace
 
 Whitespace between two elements is a word break in the rendered page, so it
-is preserved — collapsed to a single space, since the source indentation
+is preserved, but collapsed to a single space, since the source indentation
 itself carries no meaning.
 
 ```python
@@ -126,7 +126,7 @@ parse("<!DOCTYPE html><!--note--><p>hi</p>")
 # [Doctype(...), Comment(...), P(...)]
 ```
 
-`Doctype.content` is what follows `<!DOCTYPE` — `"html"` for modern
+`Doctype.content` is what follows `<!DOCTYPE`: `"html"` for modern
 documents, or the full legacy identifier string when parsing old markup.
 
 ## Limits

@@ -47,19 +47,19 @@ to_markdown(from_html("<article><h1>Title</h1><p>Body with <a href='/x'>a link</
 | `em` / `i`, `strong` / `b` | `*x*`, `**x**` |
 | `s` / `del` | `~~x~~` |
 | `code`, `pre` | `` `x` ``, fenced block (language from `class="language-*"`) |
-| `a`, `img` | `[text](href)`, `![alt](src)` — `title` included when present |
+| `a`, `img` | `[text](href)`, `![alt](src)`; `title` included when present |
 | `ul` / `ol` / `li` | `-` / `1.` items, nesting indented, `start=` honored |
 | `blockquote` | `> ` prefixed lines |
-| `table` | GFM pipe table — see [Tables](#tables) |
-| `dl` / `dt` / `dd` | definition list — the term, then `:   definition` attached |
+| `table` | GFM pipe table; see [Tables](#tables) |
+| `dl` / `dt` / `dd` | definition list; the term, then `:   definition` attached |
 | `hr`, `br` | `---`, backslash hard break |
-| `div`, `section`, … | invisible — children render as blocks |
-| `span`, `mark`, … | invisible — children flow through inline |
+| `div`, `section`, … | invisible; children render as blocks |
+| `span`, `mark`, … | invisible; children flow through inline |
 | `script`, `style`, `head`, … | dropped |
 | everything else | falls back to its HTML, which Markdown permits |
 
-The tables driving this — `INLINE_WRAPPERS`, `CONTAINER_TAGS`,
-`TRANSPARENT_TAGS`, `DROP_TAGS`, `HEADING_TAGS` — are module constants, so
+The tables driving this (`INLINE_WRAPPERS`, `CONTAINER_TAGS`,
+`TRANSPARENT_TAGS`, `DROP_TAGS`, `HEADING_TAGS`) are module constants, so
 teaching the renderer a new element is one dict or set entry.
 
 #### Element tables
@@ -123,7 +123,7 @@ Prices
   `:--` / `:-:` / `--:`.
 - **`thead` / `tbody` / `tfoot` render in that order**, matching how HTML
   displays them, even when the source declares them differently.
-- **A caption** becomes a paragraph above the table — GFM has no caption.
+- **A caption** becomes a paragraph above the table, because GFM has no caption.
 - **A headerless table** gets an empty header row, since GFM requires one;
   the first data row is not promoted.
 - **Hard breaks and block content in cells** flatten to `<br>`, which GFM
@@ -134,7 +134,7 @@ Prices
 
 ### Fences and code
 
-Content containing backticks can't break out of its own code span or fence —
+Content containing backticks can't break out of its own code span or fence, because
 the marker grows past it:
 
 ```python
@@ -152,7 +152,7 @@ round-trips preserve structure, not bytes.
 
 ## Reading Markdown
 
-`from_markdown()` returns the same kind of tree as `from_html()` — typed
+`from_markdown()` returns the same kind of tree as `from_html()`: typed
 element classes, not a foreign AST. It deliberately contains no Markdown
 parser: markdown-it-py renders CommonMark plus GFM tables and strikethrough,
 and the HTML comes back through `parse()`.
@@ -169,7 +169,7 @@ anything else is a list.
 ### The tree is the point
 
 Everything that works on a parsed HTML tree works on a parsed Markdown
-document — searching, editing, serializing:
+document, including searching, editing, and serializing:
 
 ```python
 doc = from_markdown("# Guide\n\nSee [the docs](/docs) and [the api](/api).")
@@ -180,7 +180,7 @@ from_markdown("# Title").model_dump()   # {'tag': 'h1', ...}
 ```
 
 And because `to_markdown()` accepts the same tree back, Markdown documents
-can be edited *structurally* — no regexes over source text:
+can be edited *structurally*, with no regexes over source text:
 
 ```python
 doc = from_markdown("# Title\n\n## Section\n\nBody.")
@@ -193,7 +193,7 @@ to_markdown(doc)   # '## Title\n\n### Section\n\nBody.'
 
 ### Fidelity
 
-Reading then writing is stable — a second round trip reproduces the first —
+Reading then writing is stable: a second round trip reproduces the first,
 and fenced code keeps its language and content exactly:
 
 ```python
@@ -202,4 +202,4 @@ doc.find("code").attrs["class"]   # 'language-python'
 to_markdown(doc)                  # the same fence back, byte for byte
 ```
 
-Alignment in tables survives the loop too — see [Tables](#tables).
+Alignment in tables survives the loop too. See [Tables](#tables).

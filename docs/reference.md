@@ -19,7 +19,7 @@ Div(H1("Title"), P("Body"), class_="card")
 ```
 
 On the generic `Tag`, the element name is positional-**only**, which keeps
-every possible attribute name free — including `tag` itself:
+every possible attribute name free, including `tag` itself:
 
 ```python
 Tag("div", tag="value")     # <div tag="value"></div>
@@ -38,7 +38,7 @@ An element: a name, children, and attributes.
 
 !!! note "Tag vs. element"
 
-    MDN and the HTML spec would call this class an *element* — a tag is
+    MDN and the HTML spec would call this class an *element*. A tag is
     strictly just the `<div>` marker. The name follows BeautifulSoup, whose
     node class is also `Tag`, and everyday usage. The `.tag` field holds the
     element's tag name, which matches lxml's `Element.tag` exactly.
@@ -115,7 +115,7 @@ declaration early, so rendering refuses it.
 
 `Comment(content="note")` renders `<!--note-->`. Comment syntax rules are
 neutralized on render: `--` becomes `- -`, a leading `>`/`->` and a trailing
-`-` are padded with a space — HTML5 would otherwise read the comment as
+`-` are padded with a space. HTML5 would otherwise read the comment as
 closed early and parse the remainder as live markup.
 
 ## Functions
@@ -170,7 +170,7 @@ the tag with a capital letter: `Div`, `P`, `H1`, `Textarea`, `Del`. Names are
 capitalized so they never collide with builtins like `input`, `object`, or
 `map`.
 
-**114 elements** are generated — every element in the
+**114 elements** are generated, one for every element in the
 [WHATWG HTML living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3)
 including recent additions like `search` and `selectedcontent`, plus the
 legacy `param`. Each class's docstring links to its
@@ -178,7 +178,7 @@ legacy `param`. Each class's docstring links to its
 the best per-element documentation available, so `help(Div)` points at the
 right page.
 
-`param` is also included — obsolete, but still found in old documents.
+`param` is also included. It is obsolete, but still found in old documents.
 
 Tests are parametrized over `TAG_CLASSES`, so every element is checked for
 rendering, attributes, category behavior, and both round trips.

@@ -56,7 +56,7 @@ to_markdown(from_html("<article><h1>Post</h1><p>Text with <em>emphasis</em>.</p>
 # '# Post\n\nText with *emphasis*.'
 ```
 
-Feeding an LLM, archiving a page, filling a docs pipeline — one line. This
+Feeding an LLM, archiving a page, filling a docs pipeline: one line. This
 project's own `llms.txt` generator does exactly this conversion.
 
 ## Reading
@@ -131,7 +131,7 @@ outline("# A\n\ntext\n\n## B\n\n### C")   # [(1, 'A'), (2, 'B'), (3, 'C')]
 
 ### Extract every code block
 
-Pull `(language, source)` pairs out of a document — the first step of
+Pull `(language, source)` pairs out of a document, the first step of
 "run the examples in our docs as tests", which this project does:
 
 ```python

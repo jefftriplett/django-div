@@ -46,7 +46,7 @@ docs/                        this site
 
 ## Conventions
 
-**Alphabetical order.** Constants, then functions, then classes — each group
+**Alphabetical order.** Constants, then functions, then classes. Each group is
 sorted, subject to Python needing base classes and helpers defined first.
 
 **One positional argument.** Public functions take at most one positional
@@ -59,7 +59,7 @@ generic `Tag` takes its element name positional-only. `test_tags.py` checks
 the constructor shape of every element class.
 
 **Comments explain why.** The what is in the code. Comments are for the
-reason a thing is the way it is — usually a Pydantic or HTML constraint that
+reason a thing is the way it is, usually a Pydantic or HTML constraint that
 isn't obvious from reading.
 
 ## Tests
@@ -71,7 +71,7 @@ the HTML living standard in both directions, so a missing or invented element
 fails.
 
 Adding an element means adding it to `_TAGS`. If it belongs to a category,
-add it to `VOID_ELEMENTS`, `RAW_TEXT_ELEMENTS`, or `PRE_ELEMENTS` as well — the tests
+add it to `VOID_ELEMENTS`, `RAW_TEXT_ELEMENTS`, or `PRE_ELEMENTS` as well. The tests
 will tell you. Then run `just stub`: the element classes are created at
 runtime, which type checkers cannot see, so `src/django_div/__init__.pyi`
 declares them all. `tests/test_stub.py` fails if the stub goes stale.
@@ -92,8 +92,8 @@ past.
 plugin API yet, so it is a post-build step rather than a plugin.
 
 It reads the **rendered HTML**, not `docs/*.md`. The docs use Zensical syntax
-that means nothing outside the renderer — admonitions, grid cards, content
-tabs — and a reader of the source would get raw `!!!` markers. Rendering first
+that means nothing outside the renderer (admonitions, grid cards, content
+tabs), and a reader of the source would get raw `!!!` markers. Rendering first
 turns them into prose.
 
 The conversion itself is the library's own: each page goes through
