@@ -27,7 +27,10 @@ def test_documented_python_floor_matches_pyproject():
 
 def test_documented_just_recipes_match_the_justfile():
     """Every recipe is in the contributing table, and the table invents none."""
-    recipes = set(re.findall(r"^@([\w-]+)", read("justfile"), re.MULTILINE))
+    # A recipe is a line-initial name, with or without just's @ quiet prefix.
+    recipes = set(
+        re.findall(r"^@?([a-z][\w-]*)[^:\n]*:", read("justfile"), re.MULTILINE)
+    )
     recipes.discard("_default")
     page = read("docs/contributing.md")
     documented = set(re.findall(r"`just ([\w-]+)`", page))

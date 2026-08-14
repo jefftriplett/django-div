@@ -72,6 +72,24 @@ dev = [
 requires = ["uv_build>=0.11.29,<0.12.0"]
 build-backend = "uv_build"
 
+[tool.bumpver]
+current_version = "2026.8.1"
+# CalVer, YYYY.M.N: unpadded month, micro 1-based per release within the month
+version_pattern = "YYYY.MM.INC1"
+commit_message = ":bookmark: bump version {old_version} -> {new_version}"
+commit = true
+push = false # the release recipe pushes the tag once uv.lock is amended in
+tag = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'current_version = "{version}"',
+    '^version = "{version}"',
+]
+"src/django_div/__init__.py" = [
+    '__version__ = "{version}"',
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # so components can be addressed as "tests.components.<name>"

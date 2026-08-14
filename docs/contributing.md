@@ -25,6 +25,11 @@ group: pytest, ruff, prek, Django, and both parser backends.
 | `just stub` | Regenerate `src/django_div/__init__.pyi` |
 | `just install-hooks` | Install the prek git hooks |
 | `just update-hooks` | Update pinned hook versions |
+| `just build` | Build the sdist and the wheel into `dist/` |
+| `just lock` | Refresh `uv.lock` |
+| `just bump` | Raise the CalVer version and tag it |
+| `just bump-dry` | The same, printed rather than applied |
+| `just release` | Bump, relock, and push the tag |
 
 ```console
 just test -k parse -x
@@ -114,3 +119,31 @@ runs lint.
 Read the Docs builds and deploys the documentation. `.readthedocs.yaml`
 configures it, and it runs the same `zensical build` plus `gen_llms.py` steps
 as `just docs-build`.
+
+## Releasing
+
+Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts
+at 1 for each release within that month. `bumpver` owns the number, and its
+configuration lives in `[tool.bumpver]`. It writes the version into
+`pyproject.toml` and `src/django_div/__init__.py`, which a test compares.
+
+Check what a bump would produce, then run it:
+
+```console
+just bump-dry
+just release
+```
+
+`just release` bumps the version, commits, refreshes `uv.lock`, amends the
+lock file into the same commit, re-creates the tag over it, and pushes the
+commit with its tag.
+
+The tag is what publishes. `.github/workflows/release.yml` matches a
+`YYYY.M.N` tag, runs the tests, builds the sdist and the wheel, and uploads
+them to PyPI.
+
+There is no API token. PyPI uses **Trusted Publishing**: the workflow asks
+GitHub for a short-lived OIDC token, and PyPI accepts it because the
+repository, the workflow file, and the environment match what the project
+declares. That is why the job carries `id-token: write` and runs in the
+`pypi` environment.
