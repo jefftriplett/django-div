@@ -310,3 +310,51 @@ def test_doctype_is_dropped_in_markdown():
     from django_div import Doctype
 
     assert to_markdown([Doctype(), H1("Title")]) == "# Title"
+
+
+# --- the documented tables stay in sync -------------------------------------
+
+
+def read_markdown_tables():
+    """The tables under 'Element tables' in docs/markdown.md, by section."""
+    import pathlib
+    import re
+
+    root = pathlib.Path(__file__).parent.parent
+    text = (root / "docs/markdown.md").read_text()
+    section = text.split("#### Element tables", 1)[1].split("\n### ", 1)[0]
+    sets = {
+        name: set(re.findall(r"`(\w+)`", members))
+        for name, _effect, members in re.findall(
+            r"^\| `(\w+)` \|([^|]*)\|([^|]*)\|$", section, re.MULTILINE
+        )
+    }
+    pairs = re.findall(r"^\| `(\w+)` \| (.+?) \|$", section, re.MULTILINE)
+    return sets, dict(pairs)
+
+
+def test_documented_container_transparent_and_drop_sets_match():
+    from django_div.markdown import CONTAINER_TAGS, DROP_TAGS, TRANSPARENT_TAGS
+
+    sets, _ = read_markdown_tables()
+    assert sets["CONTAINER_TAGS"] == set(CONTAINER_TAGS)
+    assert sets["TRANSPARENT_TAGS"] == set(TRANSPARENT_TAGS)
+    assert sets["DROP_TAGS"] == set(DROP_TAGS)
+
+
+def test_documented_inline_wrappers_match():
+    from django_div.markdown import INLINE_WRAPPERS
+
+    _, pairs = read_markdown_tables()
+    for tag, (left, right) in INLINE_WRAPPERS.items():
+        rendered = f"{left}x{right}"
+        expected = f"`{rendered}`" if rendered != "x" else "`x` (unwrapped)"
+        assert pairs[tag] == expected, tag
+
+
+def test_documented_heading_prefixes_match():
+    from django_div.markdown import HEADING_TAGS
+
+    _, pairs = read_markdown_tables()
+    for tag, prefix in HEADING_TAGS.items():
+        assert pairs[tag] == f"`{prefix}`", tag

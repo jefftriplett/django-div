@@ -62,6 +62,40 @@ The tables driving this — `INLINE_WRAPPERS`, `CONTAINER_TAGS`,
 `TRANSPARENT_TAGS`, `DROP_TAGS`, `HEADING_TAGS` — are module constants, so
 teaching the renderer a new element is one dict or set entry.
 
+#### Element tables
+
+These three sets decide what happens to an element with no Markdown
+equivalent. Everything absent from all of them falls back to its HTML.
+
+| Constant | Effect | Elements |
+| --- | --- | --- |
+| `CONTAINER_TAGS` | rendered as blocks, the element disappears | `article`, `aside`, `body`, `details`, `dialog`, `div`, `fieldset`, `figure`, `footer`, `form`, `header`, `hgroup`, `html`, `main`, `menu`, `nav`, `search`, `section` |
+| `TRANSPARENT_TAGS` | children flow through inline, no HTML fallback | `abbr`, `bdi`, `bdo`, `cite`, `data`, `dfn`, `kbd`, `label`, `mark`, `output`, `q`, `rp`, `rt`, `ruby`, `samp`, `slot`, `small`, `span`, `sub`, `sup`, `time`, `u`, `var` |
+| `DROP_TAGS` | removed with their content | `head`, `link`, `meta`, `script`, `style`, `template`, `title` |
+
+`INLINE_WRAPPERS` maps an inline element to a symmetric Markdown wrapper:
+
+| Tag | Renders `x` as |
+| --- | --- |
+| `b` | `**x**` |
+| `del` | `~~x~~` |
+| `em` | `*x*` |
+| `i` | `*x*` |
+| `ins` | `x` (unwrapped) |
+| `s` | `~~x~~` |
+| `strong` | `**x**` |
+
+`HEADING_TAGS` maps a heading to its prefix:
+
+| Tag | Prefix |
+| --- | --- |
+| `h1` | `#` |
+| `h2` | `##` |
+| `h3` | `###` |
+| `h4` | `####` |
+| `h5` | `#####` |
+| `h6` | `######` |
+
 ### Tables
 
 Tables get the fullest treatment, because they are where HTML-to-Markdown
