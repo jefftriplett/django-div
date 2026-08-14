@@ -5,6 +5,8 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+## 2026.8.2 - 2026-08-14
+
 ### Changed
 
 - The license is now BSD 3-Clause, the same one Django uses. Releases up to and
