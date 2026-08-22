@@ -5,6 +5,8 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+## 2026.8.3 - 2026-08-22
+
 ### Added
 
 - The 20 elements MDN's browser-compat-data tracks that were missing: 18
