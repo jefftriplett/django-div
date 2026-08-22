@@ -9,137 +9,29 @@ import pytest
 import django_div
 from django_div import (
     BUILTIN_TAGS,
+    DEPRECATED_ELEMENTS,
+    EXPERIMENTAL_ELEMENTS,
     PRE_ELEMENTS,
     RAW_TEXT_ELEMENTS,
     TAG_CLASSES,
     VOID_ELEMENTS,
+    DeprecatedElementWarning,
+    ExperimentalElementWarning,
     Tag,
     from_html,
     parse,
 )
+from tests import compat
 
-#: Every element in the HTML living standard, so a missing one is a failure
-#: rather than a discovery. Obsolete elements are deliberately excluded.
-HTML_ELEMENTS = set(
-    [
-        "a",
-        "abbr",
-        "address",
-        "area",
-        "article",
-        "aside",
-        "audio",
-        "b",
-        "base",
-        "bdi",
-        "bdo",
-        "blockquote",
-        "body",
-        "br",
-        "button",
-        "canvas",
-        "caption",
-        "cite",
-        "code",
-        "col",
-        "colgroup",
-        "data",
-        "datalist",
-        "dd",
-        "del",
-        "details",
-        "dfn",
-        "dialog",
-        "div",
-        "dl",
-        "dt",
-        "em",
-        "embed",
-        "fieldset",
-        "figcaption",
-        "figure",
-        "footer",
-        "form",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "head",
-        "header",
-        "hgroup",
-        "hr",
-        "html",
-        "i",
-        "iframe",
-        "img",
-        "input",
-        "ins",
-        "kbd",
-        "label",
-        "legend",
-        "li",
-        "link",
-        "main",
-        "map",
-        "mark",
-        "menu",
-        "meta",
-        "meter",
-        "nav",
-        "noscript",
-        "object",
-        "ol",
-        "optgroup",
-        "option",
-        "output",
-        "p",
-        "picture",
-        "pre",
-        "progress",
-        "q",
-        "rp",
-        "rt",
-        "ruby",
-        "s",
-        "samp",
-        "script",
-        "search",
-        "section",
-        "select",
-        "selectedcontent",
-        "slot",
-        "small",
-        "source",
-        "span",
-        "strong",
-        "style",
-        "sub",
-        "summary",
-        "sup",
-        "table",
-        "tbody",
-        "td",
-        "template",
-        "textarea",
-        "tfoot",
-        "th",
-        "thead",
-        "time",
-        "title",
-        "tr",
-        "track",
-        "u",
-        "ul",
-        "var",
-        "video",
-        "wbr",
-    ]
-)
+# The suite turns DeprecationWarning into an error (see pyproject.toml), which
+# is what should happen when application code reaches for <marquee>. Here the
+# deprecated elements are the subject, so building one is not a mistake.
+pytestmark = pytest.mark.filterwarnings("ignore::django_div.DeprecatedElementWarning")
 
-#: Dropped from the standard but still found in the wild, so still parsed.
-LEGACY_ELEMENTS = {"param"}
+#: Every current element in the HTML living standard, straight from the
+#: browser-compat-data snapshot rather than transcribed, so a missing one is
+#: a failure rather than a discovery.
+HTML_ELEMENTS = compat.CURRENT
 
 TAGS = sorted(BUILTIN_TAGS)
 NORMAL_TAGS = [t for t in TAGS if t not in VOID_ELEMENTS and t not in RAW_TEXT_ELEMENTS]
@@ -148,19 +40,150 @@ NORMAL_TAGS = [t for t in TAGS if t not in VOID_ELEMENTS and t not in RAW_TEXT_E
 # --- coverage of the standard -----------------------------------------------
 
 
-def test_every_html_element_has_a_class():
-    assert not HTML_ELEMENTS - BUILTIN_TAGS
+def test_every_element_mdn_tracks_has_a_class():
+    assert not compat.ELEMENTS - BUILTIN_TAGS, f"missing since {compat.SOURCE}"
 
 
 def test_no_unknown_tags_are_generated():
     # BUILTIN_TAGS, not TAG_CLASSES: the registry also holds anything a
     # caller registered with tag_class(), which is not ours to police.
-    assert not BUILTIN_TAGS - HTML_ELEMENTS - LEGACY_ELEMENTS
+    assert not BUILTIN_TAGS - compat.ELEMENTS, f"unknown to {compat.SOURCE}"
 
 
-@pytest.mark.parametrize("category", [VOID_ELEMENTS, RAW_TEXT_ELEMENTS, PRE_ELEMENTS])
+def test_status_sets_match_mdn():
+    """The library cannot read a fixture at runtime, so it keeps its own copy.
+
+    Refreshing the snapshot with `just compat` fails here when a browser
+    retires something, which is the moment to add or reclassify a class.
+    """
+    assert DEPRECATED_ELEMENTS == compat.DEPRECATED
+    assert EXPERIMENTAL_ELEMENTS == compat.EXPERIMENTAL
+
+
+def test_elements_without_an_mdn_page_match_mdn():
+    """A null mdn_url upstream is why a docstring carries no link."""
+    assert django_div._UNDOCUMENTED == compat.UNDOCUMENTED
+
+
+@pytest.mark.parametrize(
+    "category",
+    [
+        VOID_ELEMENTS,
+        RAW_TEXT_ELEMENTS,
+        PRE_ELEMENTS,
+        DEPRECATED_ELEMENTS,
+        EXPERIMENTAL_ELEMENTS,
+    ],
+)
 def test_categories_only_name_real_tags(category):
     assert not category - BUILTIN_TAGS
+
+
+def test_status_sets_do_not_overlap():
+    """A tag is current, retired, or provisional, never two of them."""
+    assert not DEPRECATED_ELEMENTS & EXPERIMENTAL_ELEMENTS
+    assert BUILTIN_TAGS == HTML_ELEMENTS | DEPRECATED_ELEMENTS | EXPERIMENTAL_ELEMENTS
+
+
+# --- deprecated and experimental elements -----------------------------------
+
+
+@pytest.mark.parametrize("tag", sorted(DEPRECATED_ELEMENTS))
+def test_building_a_deprecated_element_warns(tag):
+    with pytest.warns(DeprecatedElementWarning, match=f"<{tag}> is deprecated"):
+        TAG_CLASSES[tag]()
+
+
+@pytest.mark.parametrize("tag", sorted(EXPERIMENTAL_ELEMENTS))
+def test_building_an_experimental_element_warns_when_asked(tag):
+    with pytest.warns(ExperimentalElementWarning, match=f"<{tag}> is experimental"):
+        TAG_CLASSES[tag]()
+
+
+def test_experimental_elements_are_silent_by_default():
+    """A real interpreter, since pytest installs its own warning filters.
+
+    Checking this in-process would only prove the filter works once it is
+    reinstalled by hand, which says nothing about what a user sees.
+    """
+    import subprocess
+    import sys
+
+    builds = "; ".join(
+        f"django_div.{TAG_CLASSES[tag].__name__}()"
+        for tag in sorted(EXPERIMENTAL_ELEMENTS)
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", f"import django_div; {builds}"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stderr == ""
+
+
+def test_a_caller_filter_still_reaches_experimental_elements():
+    """The shipped filter is appended, so -W and filterwarnings win."""
+    import subprocess
+    import sys
+
+    name = TAG_CLASSES[min(EXPERIMENTAL_ELEMENTS)].__name__
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-W",
+            "error",
+            "-c",
+            f"import django_div; django_div.{name}()",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert "ExperimentalElementWarning" in result.stderr
+
+
+def test_deprecated_element_warning_is_a_deprecation_warning():
+    """So the stock -W and pytest filters already reach it."""
+    assert issubclass(DeprecatedElementWarning, DeprecationWarning)
+    assert issubclass(ExperimentalElementWarning, FutureWarning)
+
+
+@pytest.mark.parametrize("tag", sorted(HTML_ELEMENTS))
+def test_current_elements_do_not_warn(tag):
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        TAG_CLASSES[tag]()
+
+
+@pytest.mark.parametrize("tag", sorted(DEPRECATED_ELEMENTS))
+def test_parsing_a_deprecated_element_is_quiet(tag):
+    """Parsing reports what a document holds; it is not a choice to warn at.
+
+    It still comes back as the right class, so a parsed tree round trips as
+    itself rather than degrading to a generic Tag.
+    """
+    import warnings
+
+    html = f"<{tag} />" if tag in VOID_ELEMENTS else f"<{tag}></{tag}>"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        parsed = parse(html, parser="html.parser")
+    assert isinstance(parsed[0], TAG_CLASSES[tag])
+
+
+@pytest.mark.parametrize("tag", sorted(DEPRECATED_ELEMENTS))
+def test_deserializing_a_deprecated_element_is_quiet(tag):
+    """Same reasoning as parsing: the tree already exists."""
+    import warnings
+
+    dumped = TAG_CLASSES[tag](id="x").model_dump_json()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        restored = Tag.model_validate_json(dumped)
+    assert isinstance(restored, TAG_CLASSES[tag])
 
 
 # --- every tag, the basics --------------------------------------------------
@@ -234,7 +257,13 @@ def test_pre_tags_keep_their_whitespace(tag):
 # --- round trips ------------------------------------------------------------
 
 
-@pytest.mark.parametrize("tag", TAGS)
+#: <plaintext> has no end tag: everything after it is text to the end of the
+#: document, so no parser can hand it back as it was written. Kept for the
+#: same reason it exists in the standard's obsolete list -- old documents.
+UNPARSEABLE = {"plaintext"}
+
+
+@pytest.mark.parametrize("tag", [t for t in TAGS if t not in UNPARSEABLE])
 def test_tag_round_trips_through_parsing(tag):
     html = f"<{tag} />" if tag in VOID_ELEMENTS else f"<{tag}></{tag}>"
     # html.parser leaves the fragment alone; lxml would move a stray <td>
@@ -329,7 +358,7 @@ def test_mixed_children_and_several_attributes(tag):
 
 
 def test_documented_element_count_matches_reality():
-    """The '114 elements' claim in the docs and README tracks BUILTIN_TAGS."""
+    """The element-count claim in the docs and README tracks BUILTIN_TAGS."""
     import pathlib
 
     root = pathlib.Path(__file__).parent.parent
@@ -365,6 +394,8 @@ def test_documented_element_table_matches_class_and_category(tag):
             ("void", VOID_ELEMENTS),
             ("raw text", RAW_TEXT_ELEMENTS),
             ("pre", PRE_ELEMENTS),
+            ("deprecated", DEPRECATED_ELEMENTS),
+            ("experimental", EXPERIMENTAL_ELEMENTS),
         )
         if tag in members
     ]
@@ -373,10 +404,19 @@ def test_documented_element_table_matches_class_and_category(tag):
 
 @pytest.mark.parametrize("tag", TAGS)
 def test_builtin_docstrings_link_to_mdn(tag):
+    if tag in django_div._UNDOCUMENTED:
+        pytest.skip("MDN has no page for this element yet")
     assert (
         f"developer.mozilla.org/en-US/docs/Web/HTML/Element/{tag}"
         in TAG_CLASSES[tag].__doc__
     )
+
+
+@pytest.mark.parametrize("tag", sorted(DEPRECATED_ELEMENTS | EXPERIMENTAL_ELEMENTS))
+def test_docstrings_say_which_elements_are_not_current(tag):
+    doc = TAG_CLASSES[tag].__doc__
+    expected = "Deprecated" if tag in DEPRECATED_ELEMENTS else "Experimental"
+    assert expected in doc
 
 
 def test_custom_elements_do_not_claim_mdn_pages():

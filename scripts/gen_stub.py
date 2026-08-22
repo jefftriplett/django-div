@@ -35,21 +35,30 @@ __version__: str
 
 ATTR_NAME_RE: re.Pattern[str]
 BUILTIN_TAGS: frozenset[str]
+DEPRECATED_ELEMENTS: frozenset[str]
 DOCUMENT_ELEMENTS: frozenset[str]
+EXPERIMENTAL_ELEMENTS: frozenset[str]
 ITEM_CLASSES: dict[str, type[HtmlItem]]
+JSON_LD_ESCAPES: dict[int, str]
 PARSERS: tuple[str, ...]
 PRE_ELEMENTS: frozenset[str]
 RAW_TEXT_ELEMENTS: frozenset[str]
 TAG_CLASSES: dict[str, type[Tag]]
 VOID_ELEMENTS: frozenset[str]
 
+def as_json(value: Any) -> Any: ...
 def best_parser() -> str: ...
 def from_html(html: str, *, parser: str | None = None) -> Any: ...
 def is_collection(value: Any) -> bool: ...
 def marker() -> Callable[[str], str]: ...
 def normalize_attr(name: str) -> str: ...
 def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]: ...
+def render_json_ld(data: Any) -> str: ...
 def tag_class(tag: str, *, name: str | None = None) -> type[Tag]: ...
+def warn_element(tag: str) -> None: ...
+
+class DeprecatedElementWarning(DeprecationWarning): ...
+class ExperimentalElementWarning(FutureWarning): ...
 
 class HtmlItem(BaseModel):
     def __html__(self) -> str: ...
@@ -114,6 +123,12 @@ def build_stub() -> str:
             f"\nclass {cls.__name__}(Tag):\n"
             f"    def __init__(self, *children: Any, **attrs: Any) -> None: ...\n"
         )
+    # JsonLd subclasses a generated class, so it can only be declared once
+    # the loop above has emitted Script.
+    lines.append(
+        "\nclass JsonLd(Script):\n"
+        "    def __init__(self, data: Any = None, **attrs: Any) -> None: ...\n"
+    )
     names = ",\n".join(f'    "{name}"' for name in sorted(django_div.__all__))
     lines.append(f"\n__all__ = [\n{names},\n]\n")
     return "".join(line if line.endswith("\n") else line + "\n" for line in lines)

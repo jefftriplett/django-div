@@ -13,6 +13,10 @@
 @bump-dry *ARGS:
 	just bump --dry {{ ARGS }}
 
+# refresh the MDN browser-compat-data snapshot the tests check against
+@compat *ARGS:
+	uv run python scripts/gen_compat.py {{ ARGS }}
+
 @docs:
 	uv run zensical serve
 

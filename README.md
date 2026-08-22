@@ -15,9 +15,10 @@ print(Div(P("Hello, World!"), A("Click", href="/x"), class_="card"))
 
 Children are positional, attributes are keyword arguments. Text is escaped,
 void tags self-close, and Python attribute spellings map onto HTML ones
-(`class_` → `class`, `data_test_id` → `data-test-id`). All 114 elements of
+(`class_` → `class`, `data_test_id` → `data-test-id`). All 134 elements of
 the [HTML living standard](https://developer.mozilla.org/en-US/docs/Web/HTML/Element)
-ship as classes, with MDN links in their docstrings.
+ship as classes, with MDN links in their docstrings. The 19 deprecated and 2
+experimental ones warn when you build one, and stay quiet when you parse one.
 
 ## Building
 

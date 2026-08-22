@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import re
+import warnings
 from collections.abc import Callable, Iterable, Iterator
 from functools import cache
 from html import escape
@@ -31,26 +32,35 @@ from pydantic import BaseModel, BeforeValidator, Field, SerializeAsAny
 __all__ = [
     "ATTR_NAME_RE",
     "BUILTIN_TAGS",
+    "DEPRECATED_ELEMENTS",
     "DOCUMENT_ELEMENTS",
+    "EXPERIMENTAL_ELEMENTS",
     "ITEM_CLASSES",
+    "JSON_LD_ESCAPES",
     "PARSERS",
     "PRE_ELEMENTS",
     "RAW_TEXT_ELEMENTS",
     "TAG_CLASSES",
     "VOID_ELEMENTS",
     "Comment",
+    "DeprecatedElementWarning",
     "Doctype",
+    "ExperimentalElementWarning",
     "HtmlItem",
+    "JsonLd",
     "Raw",
     "Tag",
     "Text",
+    "as_json",
     "best_parser",
     "from_html",
     "is_collection",
     "marker",
     "normalize_attr",
     "parse",
+    "render_json_ld",
     "tag_class",
+    "warn_element",
     # Generated tag classes are appended at the bottom of this module.
 ]
 
@@ -66,14 +76,59 @@ __version__ = "2026.8.2"
 #: could smuggle a second attribute into the output and must be refused.
 ATTR_NAME_RE = re.compile(r'^[^\s"\'>/=\x00-\x1f\x7f]+$')
 
+#: Elements the standard has retired. They are still generated, because real
+#: documents still contain them and parsing has to name them something, but
+#: writing one by hand warns: see warn_element().
+DEPRECATED_ELEMENTS = frozenset(
+    {
+        "acronym",
+        "big",
+        "center",
+        "dir",
+        "fencedframe",
+        "font",
+        "frame",
+        "frameset",
+        "marquee",
+        "nobr",
+        "noembed",
+        "noframes",
+        "param",
+        "plaintext",
+        "rb",
+        "rtc",
+        "strike",
+        "tt",
+        "xmp",
+    }
+)
+
 #: Wrappers a parser may invent around a fragment.
 DOCUMENT_ELEMENTS = frozenset({"body", "head", "html"})
+
+#: Elements shipping in one engine but not settled across them. Generated so
+#: they are usable, and named here so a codebase can find its own bets, but
+#: silent unless the warning is asked for: see warn_element().
+EXPERIMENTAL_ELEMENTS = frozenset({"geolocation", "model"})
 
 #: Keys Pydantic passes back when it re-validates a serialized Tag.
 FIELD_KEYS = frozenset({"attrs", "children", "tag", "type"})
 
 #: Discriminator value -> class, for rebuilding leaves from a dump.
 ITEM_CLASSES: dict[str, type[HtmlItem]] = {}
+
+#: Rewrites applied to JSON before it goes inside a <script>. A JSON string
+#: may spell any character as \uXXXX, so escaping these changes no data while
+#: making "</script" and "<!--" impossible to write. The two line separators
+#: are legal in JSON but end a statement in JavaScript. Django's json_script
+#: filter escapes the same first three.
+JSON_LD_ESCAPES = {
+    ord("<"): "\\u003c",
+    ord(">"): "\\u003e",
+    ord("&"): "\\u0026",
+    ord("\u2028"): "\\u2028",
+    ord("\u2029"): "\\u2029",
+}
 
 #: Parsers to try, best first. lxml is both faster and more correct than the
 #: stdlib parser, which nests implicit closes (``<p>a<p>b``) instead of
@@ -98,6 +153,7 @@ VOID_ELEMENTS = frozenset(
         "br",
         "col",
         "embed",
+        "frame",
         "hr",
         "img",
         "input",
@@ -109,6 +165,32 @@ VOID_ELEMENTS = frozenset(
         "wbr",
     }
 )
+
+
+class DeprecatedElementWarning(DeprecationWarning):
+    """Raised when building an element the HTML standard has retired.
+
+    A DeprecationWarning subclass, so Python's default filters keep it quiet
+    in application code and surface it where it is actionable: test suites,
+    the REPL, and ``python -W``. Silence it everywhere with::
+
+        warnings.filterwarnings("ignore", category=DeprecatedElementWarning)
+    """
+
+
+class ExperimentalElementWarning(FutureWarning):
+    """Raised when building an element that is not settled across engines.
+
+    Ignored by default, since choosing an experimental element is a bet, not
+    a mistake. Ask for it with::
+
+        warnings.filterwarnings("default", category=ExperimentalElementWarning)
+    """
+
+
+# Appended rather than inserted, so it sits behind anything the caller or
+# ``python -W`` sets up and never overrides a filter someone chose.
+warnings.filterwarnings("ignore", category=ExperimentalElementWarning, append=True)
 
 
 @cache
@@ -158,6 +240,22 @@ def as_html_item(value: Any) -> Any:
         return cls(**value)
     cls = ITEM_CLASSES.get(value.get("type"))
     return cls(**value) if cls else value
+
+
+def as_json(value: Any) -> Any:
+    """Coerce what json.dumps cannot serialize on its own: Pydantic models.
+
+    Pass it as ``json.dumps(value, default=as_json)``. Nested models are
+    reached too, so a list of them, or a model with a model field, works
+    without dumping each one by hand.
+    """
+    if isinstance(value, BaseModel):
+        # by_alias, because "@context" and "@type" are not Python names and
+        # have to be declared as aliases. mode="json" so a datetime, Decimal,
+        # or UUID field arrives as a JSON primitive rather than an object
+        # json.dumps would choke on next.
+        return value.model_dump(by_alias=True, exclude_none=True, mode="json")
+    raise TypeError(f"cannot serialize {type(value).__name__} as JSON")
 
 
 def from_html(html: str, *, parser: str | None = None) -> Any:
@@ -268,8 +366,12 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
                 key: " ".join(value) if isinstance(value, list) else value
                 for key, value in node.attrs.items()
             }
-            cls = TAG_CLASSES.get(node.name)
-            item = cls(**attrs) if cls else Tag(node.name, **attrs)
+            cls = TAG_CLASSES.get(node.name, Tag)
+            # Straight to Tag.__init__, around the generated one: parsing
+            # reports what a document already contains, which is nobody's
+            # choice of element, so a deprecated tag here must not warn.
+            item = cls.__new__(cls)
+            Tag.__init__(item, node.name, **attrs)
             pending.append((node, item, verbatim))
             return item
         return None
@@ -359,6 +461,18 @@ def render_class(value: Any) -> str:
     return str(value)
 
 
+def render_json_ld(data: Any) -> str:
+    """Serialize ``data`` as JSON that is safe to put inside a ``<script>``.
+
+    Pydantic models, dicts, lists, and any mix of them. The escaping is what
+    makes it safe, and it is lossless: JSON_LD_ESCAPES only respells
+    characters that a JSON string may already spell that way, so json.loads
+    hands back exactly what went in.
+    """
+    text = json.dumps(data, default=as_json, ensure_ascii=False, separators=(",", ":"))
+    return text.translate(JSON_LD_ESCAPES)
+
+
 def render_style(value: Any) -> str:
     """Accept a string or a {property: value} mapping for ``style``.
 
@@ -385,9 +499,11 @@ def tag_class(tag: str, *, name: str | None = None) -> type[Tag]:
 
     def __init__(self, *children: Any, **attrs: Any) -> None:
         if is_field_payload(children, attrs=attrs):
+            # Pydantic rebuilding a dumped tree, not markup being authored.
             Tag.__init__(self, **attrs)
-        else:
-            Tag.__init__(self, tag, *children, **attrs)
+            return
+        warn_element(tag)
+        Tag.__init__(self, tag, *children, **attrs)
 
     cls = type(
         name,
@@ -400,6 +516,27 @@ def tag_class(tag: str, *, name: str | None = None) -> type[Tag]:
     )
     TAG_CLASSES[tag] = cls
     return cls
+
+
+def warn_element(tag: str) -> None:
+    """Warn if ``tag`` is a retired or unsettled element, else do nothing.
+
+    Called when markup is authored, not when it is parsed or deserialized,
+    so the warning always points at a line someone can change. Warnings
+    de-duplicate per call site, so a tag in a loop reports once.
+    """
+    if tag in DEPRECATED_ELEMENTS:
+        warnings.warn(
+            f"<{tag}> is deprecated in the HTML standard",
+            DeprecatedElementWarning,
+            stacklevel=3,
+        )
+    elif tag in EXPERIMENTAL_ELEMENTS:
+        warnings.warn(
+            f"<{tag}> is experimental and missing from most browsers",
+            ExperimentalElementWarning,
+            stacklevel=3,
+        )
 
 
 class HtmlItem(BaseModel):
@@ -659,11 +796,13 @@ ITEM_CLASSES.update(
     {"comment": Comment, "doctype": Doctype, "raw": Raw, "tag": Tag, "text": Text}
 )
 
+
 # Generated element classes. Names are capitalized to stay clear of builtins
 # like `input`, `object`, and `map`.
 _TAGS = [
     "a",
     "abbr",
+    "acronym",
     "address",
     "area",
     "article",
@@ -673,12 +812,14 @@ _TAGS = [
     "base",
     "bdi",
     "bdo",
+    "big",
     "blockquote",
     "body",
     "br",
     "button",
     "canvas",
     "caption",
+    "center",
     "cite",
     "code",
     "col",
@@ -690,16 +831,22 @@ _TAGS = [
     "details",
     "dfn",
     "dialog",
+    "dir",
     "div",
     "dl",
     "dt",
     "em",
     "embed",
+    "fencedframe",
     "fieldset",
     "figcaption",
     "figure",
+    "font",
     "footer",
     "form",
+    "frame",
+    "frameset",
+    "geolocation",
     "h1",
     "h2",
     "h3",
@@ -724,10 +871,15 @@ _TAGS = [
     "main",
     "map",
     "mark",
+    "marquee",
     "menu",
     "meta",
     "meter",
+    "model",
     "nav",
+    "nobr",
+    "noembed",
+    "noframes",
     "noscript",
     "object",
     "ol",
@@ -737,11 +889,14 @@ _TAGS = [
     "p",
     "param",
     "picture",
+    "plaintext",
     "pre",
     "progress",
     "q",
+    "rb",
     "rp",
     "rt",
+    "rtc",
     "ruby",
     "s",
     "samp",
@@ -754,6 +909,7 @@ _TAGS = [
     "small",
     "source",
     "span",
+    "strike",
     "strong",
     "style",
     "sub",
@@ -771,25 +927,79 @@ _TAGS = [
     "title",
     "tr",
     "track",
+    "tt",
     "u",
     "ul",
     "var",
     "video",
     "wbr",
+    "xmp",
 ]
+
+#: Standard elements MDN has no page for yet, so their docstrings carry no
+#: link rather than one that 404s. Sourced from mdn/browser-compat-data,
+#: which records a null mdn_url for them.
+_UNDOCUMENTED = frozenset({"model"})
 
 for _tag in _TAGS:
     _cls = tag_class(_tag)
-    # Custom elements registered later get no MDN link; these are standard.
-    _cls.__doc__ = (
-        f"The HTML <{_tag}> element.\n\n"
-        f"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/{_tag}"
-    )
+    _lines = [f"The HTML <{_tag}> element."]
+    if _tag in DEPRECATED_ELEMENTS:
+        _lines.append("Deprecated: building one raises DeprecatedElementWarning.")
+    elif _tag in EXPERIMENTAL_ELEMENTS:
+        _lines.append("Experimental: not settled, and missing from most browsers.")
+    if _tag not in _UNDOCUMENTED:
+        # Custom elements registered later get no MDN link; these are standard.
+        _lines.append(
+            f"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/{_tag}"
+        )
+    _cls.__doc__ = "\n\n".join(_lines)
     globals()[_cls.__name__] = _cls
     __all__.append(_cls.__name__)
 
-del _tag, _cls
+del _tag, _cls, _lines
 
 #: The elements this module generates, as opposed to any registered later by
 #: tag_class(). TAG_CLASSES grows at runtime; this does not.
 BUILTIN_TAGS = frozenset(_TAGS)
+
+
+class JsonLd(Script):  # noqa: F821 - Script is generated by the loop above
+    """A ``<script type="application/ld+json">`` holding ``data``.
+
+    Takes any Pydantic model, a dict, a list, or a mix of them::
+
+        >>> print(JsonLd({"@type": "Person", "name": "Ada"}))
+        <script type="application/ld+json">{"@type":"Person","name":"Ada"}</script>
+
+    Models are dumped by alias, since "@context" and "@type" are not Python
+    names and can only be declared as aliases, and with ``None`` dropped: a
+    JSON-LD null is not a value, so writing one only adds bytes. To dump on
+    other terms, call model_dump() yourself and hand over the dict.
+
+    The JSON is escaped so no string in it can end the script element or
+    open an HTML comment. That matters because a ``<script>`` is raw text: a
+    description holding ``</script>`` would otherwise close the tag early
+    and leave the rest of the payload on the page as live markup. Handing
+    the same JSON to Script() raises instead of injecting, so this closes no
+    hole -- it closes the gap where the safe path refused to render.
+
+    Keyword arguments become attributes, ``type`` included, so a different
+    JSON media type is one keyword away.
+
+    Parsing or re-validating one gives back a plain Script rather than a
+    JsonLd: a tag name maps to a single class, and ``script`` is taken. It
+    renders identically, and ``json.loads(tag.text)`` reads the data back.
+    """
+
+    def __init__(self, data: Any = None, **attrs: Any) -> None:
+        if is_field_payload((), attrs=attrs):
+            # Pydantic rebuilding a dumped tree, not markup being authored.
+            Tag.__init__(self, **attrs)
+            return
+        Tag.__init__(
+            self,
+            "script",
+            render_json_ld(data),
+            **{"type": "application/ld+json", **attrs},
+        )

@@ -93,6 +93,29 @@ Tag(name, *children, **attrs)
 `model_validate(obj)` / `model_validate_json(data)`
 :   Load a tree, restoring element classes by their `tag`.
 
+### `JsonLd`
+
+`JsonLd(data, **attrs)` is a `Script` holding `data` as JSON-LD, ready to nest
+anywhere a tag goes. `data` may be any Pydantic model, a dict, a list, or a
+mix; nothing has to inherit from anything here.
+
+```python
+Head(Title("Acme"), JsonLd(Organization(name="Acme", url="/")))
+```
+
+`None` fields drop out, since a JSON-LD null is not a value. The JSON is
+escaped per `JSON_LD_ESCAPES` so no string in it can end the script element
+or open an HTML comment, which matters because a `<script>` is raw text.
+Keyword arguments become attributes, `type` included.
+
+Models are dumped by alias, since `@context` and `@type` are not Python names
+and can only be declared as aliases, and with `None` dropped. To dump on
+other terms, call `model_dump()` yourself and hand over the dict.
+
+Parsing or re-validating one gives back a plain `Script`, since a tag name
+maps to a single class and `script` is taken. It renders identically, and
+`json.loads(tag.text)` reads the data back.
+
 ### `Text`
 
 Escaped text. `Text(content="a < b")` renders `a &lt; b`.
@@ -136,6 +159,14 @@ closed early and parse the remainder as live markup.
 :   Python attribute spelling to HTML: `class_` to `class`. A trailing
     underscore is dropped, so any Python keyword works as `keyword_`.
 
+`render_json_ld(data)`
+:   Serialize a model, dict, or list as JSON that is safe inside a
+    `<script>`. The escaping is lossless, so `json.loads` returns what went
+    in.
+
+`as_json(value)`
+:   The `json.dumps(..., default=...)` hook that reaches Pydantic models.
+
 `render_attrs(attrs)` / `render_class(value)` / `render_style(value)`
 :   The attribute rendering helpers.
 
@@ -155,12 +186,15 @@ closed early and parse the remainder as live markup.
 | --- | --- |
 | `TAG_CLASSES` | Tag name to class, including ones registered at runtime |
 | `BUILTIN_TAGS` | The element names this library ships |
+| `DEPRECATED_ELEMENTS` | Elements the standard retired; building one warns |
+| `EXPERIMENTAL_ELEMENTS` | Elements not settled across engines |
 | `ITEM_CLASSES` | Discriminator to leaf class |
 | `VOID_ELEMENTS` | Elements that self-close |
 | `RAW_TEXT_ELEMENTS` | `script`, `style` |
 | `PRE_ELEMENTS` | `pre`, `textarea` |
 | `DOCUMENT_ELEMENTS` | `html`, `head`, `body` |
 | `ATTR_NAME_RE` | What a rendered attribute name may look like |
+| `JSON_LD_ESCAPES` | Rewrites applied to JSON going inside a `<script>` |
 | `PARSERS` | Parser preference order |
 
 ## Element classes
@@ -170,29 +204,59 @@ the tag with a capital letter: `Div`, `P`, `H1`, `Textarea`, `Del`. Names are
 capitalized so they never collide with builtins like `input`, `object`, or
 `map`.
 
-**114 elements** are generated, one for every element in the
-[WHATWG HTML living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3)
-including recent additions like `search` and `selectedcontent`, plus the
-legacy `param`. Each class's docstring links to its
+**134 elements** are generated: the 113 current elements of the
+[WHATWG HTML living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3),
+including recent additions like `search` and `selectedcontent`, plus 19
+deprecated and 2 experimental ones. The three sets are tracked against
+[MDN's browser-compat-data](https://github.com/mdn/browser-compat-data/tree/main/html/elements).
+Each class's docstring links to its
 [MDN element reference](https://developer.mozilla.org/en-US/docs/Web/HTML/Element),
 the best per-element documentation available, so `help(Div)` points at the
 right page.
 
-`param` is also included. It is obsolete, but still found in old documents.
+### Deprecated and experimental elements
+
+Retired elements are still generated, because old documents still contain
+them and parsing has to name them something. Writing one by hand raises
+`DeprecatedElementWarning`, a `DeprecationWarning` subclass, so it is quiet
+in application code and loud where it is actionable -- test suites, the
+REPL, and `python -W`:
+
+```python
+import warnings
+from django_div import DeprecatedElementWarning
+
+warnings.filterwarnings("ignore", category=DeprecatedElementWarning)
+```
+
+Experimental elements raise `ExperimentalElementWarning`, which is filtered
+out on import, since choosing one is a bet rather than a mistake. Ask for it:
+
+```python
+warnings.filterwarnings("default", category=ExperimentalElementWarning)
+```
+
+Both warnings fire when markup is authored, never when it is parsed or
+deserialized, so the warning always points at a line someone can change and
+a legacy document does not flood the log. `DEPRECATED_ELEMENTS` and
+`EXPERIMENTAL_ELEMENTS` name the sets, for a codebase that would rather grep
+than wait for a warning.
 
 Tests are parametrized over `TAG_CLASSES`, so every element is checked for
 rendering, attributes, category behavior, and both round trips.
 
 ### All elements
 
-The **Notes** column marks the three behavior sets: `void` elements
-self-close and take no children, `raw text` content is never escaped, and
-`pre` content keeps its whitespace verbatim.
+The **Notes** column marks the behavior sets -- `void` elements self-close
+and take no children, `raw text` content is never escaped, and `pre` content
+keeps its whitespace verbatim -- and the standing of elements that are not
+current: `deprecated` and `experimental`.
 
 | Class | Tag | Notes |
 | --- | --- | --- |
 | `A` | `<a>` |  |
 | `Abbr` | `<abbr>` |  |
+| `Acronym` | `<acronym>` | deprecated |
 | `Address` | `<address>` |  |
 | `Area` | `<area>` | void |
 | `Article` | `<article>` |  |
@@ -202,12 +266,14 @@ self-close and take no children, `raw text` content is never escaped, and
 | `Base` | `<base>` | void |
 | `Bdi` | `<bdi>` |  |
 | `Bdo` | `<bdo>` |  |
+| `Big` | `<big>` | deprecated |
 | `Blockquote` | `<blockquote>` |  |
 | `Body` | `<body>` |  |
 | `Br` | `<br>` | void |
 | `Button` | `<button>` |  |
 | `Canvas` | `<canvas>` |  |
 | `Caption` | `<caption>` |  |
+| `Center` | `<center>` | deprecated |
 | `Cite` | `<cite>` |  |
 | `Code` | `<code>` |  |
 | `Col` | `<col>` | void |
@@ -219,16 +285,22 @@ self-close and take no children, `raw text` content is never escaped, and
 | `Details` | `<details>` |  |
 | `Dfn` | `<dfn>` |  |
 | `Dialog` | `<dialog>` |  |
+| `Dir` | `<dir>` | deprecated |
 | `Div` | `<div>` |  |
 | `Dl` | `<dl>` |  |
 | `Dt` | `<dt>` |  |
 | `Em` | `<em>` |  |
 | `Embed` | `<embed>` | void |
+| `Fencedframe` | `<fencedframe>` | deprecated |
 | `Fieldset` | `<fieldset>` |  |
 | `Figcaption` | `<figcaption>` |  |
 | `Figure` | `<figure>` |  |
+| `Font` | `<font>` | deprecated |
 | `Footer` | `<footer>` |  |
 | `Form` | `<form>` |  |
+| `Frame` | `<frame>` | void, deprecated |
+| `Frameset` | `<frameset>` | deprecated |
+| `Geolocation` | `<geolocation>` | experimental |
 | `H1` | `<h1>` |  |
 | `H2` | `<h2>` |  |
 | `H3` | `<h3>` |  |
@@ -253,10 +325,15 @@ self-close and take no children, `raw text` content is never escaped, and
 | `Main` | `<main>` |  |
 | `Map` | `<map>` |  |
 | `Mark` | `<mark>` |  |
+| `Marquee` | `<marquee>` | deprecated |
 | `Menu` | `<menu>` |  |
 | `Meta` | `<meta>` | void |
 | `Meter` | `<meter>` |  |
+| `Model` | `<model>` | experimental |
 | `Nav` | `<nav>` |  |
+| `Nobr` | `<nobr>` | deprecated |
+| `Noembed` | `<noembed>` | deprecated |
+| `Noframes` | `<noframes>` | deprecated |
 | `Noscript` | `<noscript>` |  |
 | `Object` | `<object>` |  |
 | `Ol` | `<ol>` |  |
@@ -264,13 +341,16 @@ self-close and take no children, `raw text` content is never escaped, and
 | `Option` | `<option>` |  |
 | `Output` | `<output>` |  |
 | `P` | `<p>` |  |
-| `Param` | `<param>` | void |
+| `Param` | `<param>` | void, deprecated |
 | `Picture` | `<picture>` |  |
+| `Plaintext` | `<plaintext>` | deprecated |
 | `Pre` | `<pre>` | pre |
 | `Progress` | `<progress>` |  |
 | `Q` | `<q>` |  |
+| `Rb` | `<rb>` | deprecated |
 | `Rp` | `<rp>` |  |
 | `Rt` | `<rt>` |  |
+| `Rtc` | `<rtc>` | deprecated |
 | `Ruby` | `<ruby>` |  |
 | `S` | `<s>` |  |
 | `Samp` | `<samp>` |  |
@@ -283,6 +363,7 @@ self-close and take no children, `raw text` content is never escaped, and
 | `Small` | `<small>` |  |
 | `Source` | `<source>` | void |
 | `Span` | `<span>` |  |
+| `Strike` | `<strike>` | deprecated |
 | `Strong` | `<strong>` |  |
 | `Style` | `<style>` | raw text |
 | `Sub` | `<sub>` |  |
@@ -300,11 +381,13 @@ self-close and take no children, `raw text` content is never escaped, and
 | `Title` | `<title>` |  |
 | `Tr` | `<tr>` |  |
 | `Track` | `<track>` | void |
+| `Tt` | `<tt>` | deprecated |
 | `U` | `<u>` |  |
 | `Ul` | `<ul>` |  |
 | `Var` | `<var>` |  |
 | `Video` | `<video>` |  |
 | `Wbr` | `<wbr>` | void |
+| `Xmp` | `<xmp>` | deprecated |
 
 ## `django_div.markdown`
 

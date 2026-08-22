@@ -5,6 +5,39 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+### Added
+
+- The 20 elements MDN's browser-compat-data tracks that were missing: 18
+  deprecated (`acronym`, `big`, `center`, `dir`, `fencedframe`, `font`,
+  `frame`, `frameset`, `marquee`, `nobr`, `noembed`, `noframes`, `plaintext`,
+  `rb`, `rtc`, `strike`, `tt`, `xmp`) and 2 experimental (`geolocation`,
+  `model`). 134 elements now, up from 114.
+- `DeprecatedElementWarning` and `ExperimentalElementWarning`, raised when
+  markup is authored -- never when it is parsed or deserialized, so reading a
+  legacy document stays quiet. `DeprecatedElementWarning` subclasses
+  `DeprecationWarning`, so Python's stock filters already hide it in
+  application code and surface it under pytest and `python -W`.
+  `ExperimentalElementWarning` is filtered out on import; the filter is
+  appended, so `-W` and any `filterwarnings` call still reach it.
+- `DEPRECATED_ELEMENTS` and `EXPERIMENTAL_ELEMENTS`, for finding these
+  elements by grep rather than by warning.
+- `JsonLd(data, **attrs)`, a `Script` holding any Pydantic model, dict, or
+  list as JSON-LD. Models are dumped by alias, since `@context` and `@type`
+  can only be declared as aliases, and with `None` dropped. `None` fields drop out, since a JSON-LD null is not a value.
+  The JSON is escaped per `JSON_LD_ESCAPES` so no string in it can end the
+  script element or open an HTML comment: a `<script>` is raw text, so a
+  description containing `</script>` would otherwise close the tag early and
+  leave the rest of the payload on the page as live markup.
+- `render_json_ld(data)` and `as_json(value)`, the serializer and the
+  `json.dumps(..., default=...)` hook behind them, which reach nested models
+  too.
+
+### Changed
+
+- `param` moved into `DEPRECATED_ELEMENTS`, so `Param(...)` now warns. It was
+  already documented as obsolete; MDN marks it deprecated too.
+- `frame` is a void element, so `Frame()` renders `<frame />`.
+
 ## 2026.8.2 - 2026-08-14
 
 ### Changed
