@@ -121,16 +121,19 @@ that shouldn't be registered, `Tag("my-widget", ...)` skips it.
 Schema.org markup is JSON in a `<script>`, and a `<script>` is raw text: the
 parser reads to the closing tag without decoding entities, so a name or
 description containing `</script>` would close the tag early and the rest of
-the payload would land on the page as live markup. `json_ld()` writes the
+the payload would land on the page as live markup. `JsonLd` writes the
 dangerous characters as the `\uXXXX` escapes JSON already understands, which
 changes no data and makes that impossible.
 
-`@context` and `@type` are not Python names, so they have to be aliases:
+Any Pydantic model works; nothing has to inherit from anything in
+django-div. `@context` and `@type` are not Python names, so declare them as
+aliases, which is also how you reach schema.org's camelCase properties like
+`sameAs`:
 
 ```python
 from pydantic import BaseModel, ConfigDict, Field
 
-from django_div import Head, Title, json_ld
+from django_div import Head, JsonLd, Title
 
 
 class Organization(BaseModel):
@@ -141,16 +144,23 @@ class Organization(BaseModel):
     name: str
     url: str
     logo: str | None = None
+    same_as: list[str] | None = Field(None, alias="sameAs")
 
 
 head = Head(
     Title("Acme"),
-    json_ld(Organization(name="Acme", url="https://acme.example")),
+    JsonLd(Organization(name="Acme", url="https://acme.example")),
 )
 ```
 
-`logo` is `None`, so it never renders. A JSON-LD null is not a value, so
-dropping it is what the format means anyway.
+Models are dumped by alias with `None` dropped, so `logo` and `same_as` never
+render. A JSON-LD null is not a value, so dropping it is what the format
+means anyway. To dump on other terms, call `model_dump()` yourself and pass
+the dict.
+
+If you write a lot of these, the two constant fields are worth a base class
+of your own -- but that is your vocabulary to shape, not something django-div
+should decide for you.
 
 Pass a list to emit several objects at once, and read one back out of a page
 with `json.loads(tag.text)`:

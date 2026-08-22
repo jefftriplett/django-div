@@ -25,6 +25,7 @@ from django_div import (
     Head,
     Html,
     Input,
+    JsonLd,
     Label,
     Li,
     Meta,
@@ -45,7 +46,6 @@ from django_div import (
     Tr,
     Ul,
     from_html,
-    json_ld,
     parse,
     tag_class,
 )
@@ -142,12 +142,13 @@ class Organization(BaseModel):
     name: str
     url: str
     logo: str | None = None
+    same_as: list[str] | None = Field(None, alias="sameAs")
 
 
 def test_json_ld_from_a_pydantic_model():
     head = Head(
         Title("Acme"),
-        json_ld(Organization(name="Acme", url="https://acme.example")),
+        JsonLd(Organization(name="Acme", url="https://acme.example")),
     )
     assert str(head) == (
         "<head><title>Acme</title>"
@@ -160,8 +161,9 @@ def test_json_ld_from_a_pydantic_model():
     page = from_html(str(head))
     data = json.loads(page.find("script", type="application/ld+json").text)
     assert data["name"] == "Acme"
-    # logo is None, so it never reached the markup.
+    # logo and same_as are None, so neither reached the markup.
     assert "logo" not in data
+    assert "sameAs" not in data
 
 
 def icon(name, size=16):

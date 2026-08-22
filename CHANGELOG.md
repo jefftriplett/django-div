@@ -21,15 +21,16 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
   appended, so `-W` and any `filterwarnings` call still reach it.
 - `DEPRECATED_ELEMENTS` and `EXPERIMENTAL_ELEMENTS`, for finding these
   elements by grep rather than by warning.
-- `json_ld(data, **attrs)`, rendering a Pydantic model, dict, or list into a
-  `<script type="application/ld+json">`. `None` fields drop out, since a
-  JSON-LD null is not a value, and `@context`/`@type` come through as
-  Pydantic aliases. The JSON is escaped per `JSON_LD_ESCAPES` so no string in
-  it can end the script element or open an HTML comment: a `<script>` is raw
-  text, so a description containing `</script>` would otherwise close the tag
-  early and leave the rest of the payload on the page as live markup.
-- `as_json(value)`, the `json.dumps(..., default=...)` hook that reaches
-  Pydantic models, including nested ones.
+- `JsonLd(data, **attrs)`, a `Script` holding any Pydantic model, dict, or
+  list as JSON-LD. Models are dumped by alias, since `@context` and `@type`
+  can only be declared as aliases, and with `None` dropped. `None` fields drop out, since a JSON-LD null is not a value.
+  The JSON is escaped per `JSON_LD_ESCAPES` so no string in it can end the
+  script element or open an HTML comment: a `<script>` is raw text, so a
+  description containing `</script>` would otherwise close the tag early and
+  leave the rest of the payload on the page as live markup.
+- `render_json_ld(data)` and `as_json(value)`, the serializer and the
+  `json.dumps(..., default=...)` hook behind them, which reach nested models
+  too.
 
 ### Changed
 

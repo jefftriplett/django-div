@@ -93,6 +93,29 @@ Tag(name, *children, **attrs)
 `model_validate(obj)` / `model_validate_json(data)`
 :   Load a tree, restoring element classes by their `tag`.
 
+### `JsonLd`
+
+`JsonLd(data, **attrs)` is a `Script` holding `data` as JSON-LD, ready to nest
+anywhere a tag goes. `data` may be any Pydantic model, a dict, a list, or a
+mix; nothing has to inherit from anything here.
+
+```python
+Head(Title("Acme"), JsonLd(Organization(name="Acme", url="/")))
+```
+
+`None` fields drop out, since a JSON-LD null is not a value. The JSON is
+escaped per `JSON_LD_ESCAPES` so no string in it can end the script element
+or open an HTML comment, which matters because a `<script>` is raw text.
+Keyword arguments become attributes, `type` included.
+
+Models are dumped by alias, since `@context` and `@type` are not Python names
+and can only be declared as aliases, and with `None` dropped. To dump on
+other terms, call `model_dump()` yourself and hand over the dict.
+
+Parsing or re-validating one gives back a plain `Script`, since a tag name
+maps to a single class and `script` is taken. It renders identically, and
+`json.loads(tag.text)` reads the data back.
+
 ### `Text`
 
 Escaped text. `Text(content="a < b")` renders `a &lt; b`.
@@ -136,10 +159,10 @@ closed early and parse the remainder as live markup.
 :   Python attribute spelling to HTML: `class_` to `class`. A trailing
     underscore is dropped, so any Python keyword works as `keyword_`.
 
-`json_ld(data, **attrs)`
-:   A `<script type="application/ld+json">` holding `data`, which may be a
-    Pydantic model, a dict, a list, or any mix. `None` fields are dropped and
-    the JSON is escaped so no string in it can end the script element.
+`render_json_ld(data)`
+:   Serialize a model, dict, or list as JSON that is safe inside a
+    `<script>`. The escaping is lossless, so `json.loads` returns what went
+    in.
 
 `as_json(value)`
 :   The `json.dumps(..., default=...)` hook that reaches Pydantic models.
