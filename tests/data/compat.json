@@ -1,0 +1,736 @@
+{
+  "source": {
+    "package": "@mdn/browser-compat-data",
+    "version": "8.0.12",
+    "license": "CC0-1.0",
+    "url": "https://github.com/mdn/browser-compat-data"
+  },
+  "elements": {
+    "a": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/a"
+    },
+    "abbr": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/abbr"
+    },
+    "acronym": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/acronym"
+    },
+    "address": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/address"
+    },
+    "area": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/area"
+    },
+    "article": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/article"
+    },
+    "aside": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/aside"
+    },
+    "audio": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/audio"
+    },
+    "b": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/b"
+    },
+    "base": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/base"
+    },
+    "bdi": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/bdi"
+    },
+    "bdo": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/bdo"
+    },
+    "big": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/big"
+    },
+    "blockquote": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/blockquote"
+    },
+    "body": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/body"
+    },
+    "br": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/br"
+    },
+    "button": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/button"
+    },
+    "canvas": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/canvas"
+    },
+    "caption": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/caption"
+    },
+    "center": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/center"
+    },
+    "cite": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/cite"
+    },
+    "code": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/code"
+    },
+    "col": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/col"
+    },
+    "colgroup": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/colgroup"
+    },
+    "data": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/data"
+    },
+    "datalist": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/datalist"
+    },
+    "dd": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/dd"
+    },
+    "del": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/del"
+    },
+    "details": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/details"
+    },
+    "dfn": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/dfn"
+    },
+    "dialog": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/dialog"
+    },
+    "dir": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/dir"
+    },
+    "div": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/div"
+    },
+    "dl": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/dl"
+    },
+    "dt": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/dt"
+    },
+    "em": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/em"
+    },
+    "embed": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/embed"
+    },
+    "fencedframe": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/fencedframe"
+    },
+    "fieldset": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/fieldset"
+    },
+    "figcaption": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/figcaption"
+    },
+    "figure": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/figure"
+    },
+    "font": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/font"
+    },
+    "footer": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/footer"
+    },
+    "form": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/form"
+    },
+    "frame": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/frame"
+    },
+    "frameset": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/frameset"
+    },
+    "geolocation": {
+      "deprecated": false,
+      "experimental": true,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/geolocation"
+    },
+    "h1": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/Heading_Elements"
+    },
+    "h2": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/Heading_Elements"
+    },
+    "h3": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/Heading_Elements"
+    },
+    "h4": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/Heading_Elements"
+    },
+    "h5": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/Heading_Elements"
+    },
+    "h6": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/Heading_Elements"
+    },
+    "head": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/head"
+    },
+    "header": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/header"
+    },
+    "hgroup": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/hgroup"
+    },
+    "hr": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/hr"
+    },
+    "html": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/html"
+    },
+    "i": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/i"
+    },
+    "iframe": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/iframe"
+    },
+    "img": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/img"
+    },
+    "input": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/input"
+    },
+    "ins": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/ins"
+    },
+    "kbd": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/kbd"
+    },
+    "label": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/label"
+    },
+    "legend": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/legend"
+    },
+    "li": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/li"
+    },
+    "link": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/link"
+    },
+    "main": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/main"
+    },
+    "map": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/map"
+    },
+    "mark": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/mark"
+    },
+    "marquee": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/marquee"
+    },
+    "menu": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/menu"
+    },
+    "meta": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/meta"
+    },
+    "meter": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/meter"
+    },
+    "model": {
+      "deprecated": false,
+      "experimental": true,
+      "mdn_url": null
+    },
+    "nav": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/nav"
+    },
+    "nobr": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/nobr"
+    },
+    "noembed": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/noembed"
+    },
+    "noframes": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/noframes"
+    },
+    "noscript": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/noscript"
+    },
+    "object": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/object"
+    },
+    "ol": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/ol"
+    },
+    "optgroup": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/optgroup"
+    },
+    "option": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/option"
+    },
+    "output": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/output"
+    },
+    "p": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/p"
+    },
+    "param": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/param"
+    },
+    "picture": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/picture"
+    },
+    "plaintext": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/plaintext"
+    },
+    "pre": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/pre"
+    },
+    "progress": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/progress"
+    },
+    "q": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/q"
+    },
+    "rb": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/rb"
+    },
+    "rp": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/rp"
+    },
+    "rt": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/rt"
+    },
+    "rtc": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/rtc"
+    },
+    "ruby": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/ruby"
+    },
+    "s": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/s"
+    },
+    "samp": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/samp"
+    },
+    "script": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/script"
+    },
+    "search": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/search"
+    },
+    "section": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/section"
+    },
+    "select": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/select"
+    },
+    "selectedcontent": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/selectedcontent"
+    },
+    "slot": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/slot"
+    },
+    "small": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/small"
+    },
+    "source": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/source"
+    },
+    "span": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/span"
+    },
+    "strike": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/strike"
+    },
+    "strong": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/strong"
+    },
+    "style": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/style"
+    },
+    "sub": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/sub"
+    },
+    "summary": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/summary"
+    },
+    "sup": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/sup"
+    },
+    "table": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/table"
+    },
+    "tbody": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/tbody"
+    },
+    "td": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/td"
+    },
+    "template": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/template"
+    },
+    "textarea": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/textarea"
+    },
+    "tfoot": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/tfoot"
+    },
+    "th": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/th"
+    },
+    "thead": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/thead"
+    },
+    "time": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/time"
+    },
+    "title": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/title"
+    },
+    "tr": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/tr"
+    },
+    "track": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/track"
+    },
+    "tt": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/tt"
+    },
+    "u": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/u"
+    },
+    "ul": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/ul"
+    },
+    "var": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/var"
+    },
+    "video": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/video"
+    },
+    "wbr": {
+      "deprecated": false,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/wbr"
+    },
+    "xmp": {
+      "deprecated": true,
+      "experimental": false,
+      "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/xmp"
+    }
+  },
+  "global_attributes": [
+    "accesskey",
+    "anchor",
+    "autocapitalize",
+    "autocorrect",
+    "autofocus",
+    "class",
+    "contenteditable",
+    "dir",
+    "draggable",
+    "enterkeyhint",
+    "exportparts",
+    "headingoffset",
+    "headingreset",
+    "hidden",
+    "id",
+    "inert",
+    "inputmode",
+    "is",
+    "lang",
+    "nonce",
+    "part",
+    "popover",
+    "slot",
+    "spellcheck",
+    "style",
+    "tabindex",
+    "title",
+    "translate",
+    "virtualkeyboardpolicy",
+    "writingsuggestions"
+  ],
+  "input_types": [
+    "button",
+    "checkbox",
+    "color",
+    "date",
+    "datetime-local",
+    "email",
+    "file",
+    "hidden",
+    "image",
+    "month",
+    "number",
+    "password",
+    "radio",
+    "range",
+    "reset",
+    "search",
+    "submit",
+    "tel",
+    "text",
+    "time",
+    "url",
+    "week"
+  ]
+}

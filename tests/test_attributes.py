@@ -7,8 +7,9 @@ translation layer -- a spelling ``normalize_attr()`` mangles, a name
 ``ATTR_NAME_RE`` rejects, a value the renderer or the parser loses. These
 tests walk the real lists so that failure shows up here.
 
-Both sets are transcribed from mdn/browser-compat-data:
-``html/global_attributes.json`` and ``html/elements/input/``.
+Both lists come from the browser-compat-data snapshot in ``tests/data``, so
+they cannot drift out of a typo: a hand-written set that quietly covered 29
+of 30 attributes would still pass everything below.
 """
 
 import keyword
@@ -16,70 +17,14 @@ import keyword
 import pytest
 
 from django_div import ATTR_NAME_RE, Div, Input, from_html, normalize_attr
+from tests import compat
 
-#: Every global attribute, by its HTML spelling. BCD's ``data_attributes``
-#: entry stands for the open-ended ``data-*`` family rather than a real
-#: attribute name, so it is covered separately below.
-GLOBAL_ATTRIBUTES = {
-    "accesskey",
-    "anchor",
-    "autocapitalize",
-    "autocorrect",
-    "autofocus",
-    "class",
-    "contenteditable",
-    "dir",
-    "draggable",
-    "enterkeyhint",
-    "exportparts",
-    "headingoffset",
-    "headingreset",
-    "hidden",
-    "id",
-    "inert",
-    "inputmode",
-    "is",
-    "lang",
-    "nonce",
-    "part",
-    "popover",
-    "slot",
-    "spellcheck",
-    "style",
-    "tabindex",
-    "title",
-    "translate",
-    "virtualkeyboardpolicy",
-    "writingsuggestions",
-}
-
-#: Every ``<input type>`` value in the standard. All 22 are current; the
-#: standard has no deprecated ones left, ``datetime`` having been dropped
-#: outright rather than kept around.
-INPUT_TYPES = {
-    "button",
-    "checkbox",
-    "color",
-    "date",
-    "datetime-local",
-    "email",
-    "file",
-    "hidden",
-    "image",
-    "month",
-    "number",
-    "password",
-    "radio",
-    "range",
-    "reset",
-    "search",
-    "submit",
-    "tel",
-    "text",
-    "time",
-    "url",
-    "week",
-}
+#: Every global attribute and every ``<input type>`` value, from the
+#: browser-compat-data snapshot. BCD's ``data_attributes`` entry stands for
+#: the open-ended ``data-*`` family rather than a real name, and is dropped
+#: when the snapshot is generated; it is covered separately below.
+GLOBAL_ATTRIBUTES = compat.GLOBAL_ATTRIBUTES
+INPUT_TYPES = compat.INPUT_TYPES
 
 ATTRIBUTES = sorted(GLOBAL_ATTRIBUTES)
 TYPES = sorted(INPUT_TYPES)
@@ -202,7 +147,13 @@ def test_input_type_renders_alongside_the_usual_form_attributes(input_type):
 
 
 def test_input_types_are_safe_as_attribute_values():
-    """Nothing here needs escaping, so a mismatch means a typo in the list."""
+    """Nothing here needs escaping, so a new one that does is worth knowing."""
     for input_type in INPUT_TYPES:
         assert input_type == input_type.lower()
         assert not set(input_type) - set("abcdefghijklmnopqrstuvwxyz-")
+
+
+def test_the_lists_are_not_empty():
+    """A snapshot that failed to generate would make every test above vacuous."""
+    assert len(GLOBAL_ATTRIBUTES) > 20
+    assert len(INPUT_TYPES) > 20

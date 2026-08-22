@@ -21,133 +21,17 @@ from django_div import (
     from_html,
     parse,
 )
+from tests import compat
 
 # The suite turns DeprecationWarning into an error (see pyproject.toml), which
 # is what should happen when application code reaches for <marquee>. Here the
 # deprecated elements are the subject, so building one is not a mistake.
 pytestmark = pytest.mark.filterwarnings("ignore::django_div.DeprecatedElementWarning")
 
-#: Every current element in the HTML living standard, so a missing one is a
-#: failure rather than a discovery. Retired and provisional elements are also
-#: generated, and tracked separately in DEPRECATED_ELEMENTS and
-#: EXPERIMENTAL_ELEMENTS so this set stays a statement about the standard.
-HTML_ELEMENTS = set(
-    [
-        "a",
-        "abbr",
-        "address",
-        "area",
-        "article",
-        "aside",
-        "audio",
-        "b",
-        "base",
-        "bdi",
-        "bdo",
-        "blockquote",
-        "body",
-        "br",
-        "button",
-        "canvas",
-        "caption",
-        "cite",
-        "code",
-        "col",
-        "colgroup",
-        "data",
-        "datalist",
-        "dd",
-        "del",
-        "details",
-        "dfn",
-        "dialog",
-        "div",
-        "dl",
-        "dt",
-        "em",
-        "embed",
-        "fieldset",
-        "figcaption",
-        "figure",
-        "footer",
-        "form",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-        "head",
-        "header",
-        "hgroup",
-        "hr",
-        "html",
-        "i",
-        "iframe",
-        "img",
-        "input",
-        "ins",
-        "kbd",
-        "label",
-        "legend",
-        "li",
-        "link",
-        "main",
-        "map",
-        "mark",
-        "menu",
-        "meta",
-        "meter",
-        "nav",
-        "noscript",
-        "object",
-        "ol",
-        "optgroup",
-        "option",
-        "output",
-        "p",
-        "picture",
-        "pre",
-        "progress",
-        "q",
-        "rp",
-        "rt",
-        "ruby",
-        "s",
-        "samp",
-        "script",
-        "search",
-        "section",
-        "select",
-        "selectedcontent",
-        "slot",
-        "small",
-        "source",
-        "span",
-        "strong",
-        "style",
-        "sub",
-        "summary",
-        "sup",
-        "table",
-        "tbody",
-        "td",
-        "template",
-        "textarea",
-        "tfoot",
-        "th",
-        "thead",
-        "time",
-        "title",
-        "tr",
-        "track",
-        "u",
-        "ul",
-        "var",
-        "video",
-        "wbr",
-    ]
-)
+#: Every current element in the HTML living standard, straight from the
+#: browser-compat-data snapshot rather than transcribed, so a missing one is
+#: a failure rather than a discovery.
+HTML_ELEMENTS = compat.CURRENT
 
 TAGS = sorted(BUILTIN_TAGS)
 NORMAL_TAGS = [t for t in TAGS if t not in VOID_ELEMENTS and t not in RAW_TEXT_ELEMENTS]
@@ -156,16 +40,29 @@ NORMAL_TAGS = [t for t in TAGS if t not in VOID_ELEMENTS and t not in RAW_TEXT_E
 # --- coverage of the standard -----------------------------------------------
 
 
-def test_every_html_element_has_a_class():
-    assert not HTML_ELEMENTS - BUILTIN_TAGS
+def test_every_element_mdn_tracks_has_a_class():
+    assert not compat.ELEMENTS - BUILTIN_TAGS, f"missing since {compat.SOURCE}"
 
 
 def test_no_unknown_tags_are_generated():
     # BUILTIN_TAGS, not TAG_CLASSES: the registry also holds anything a
     # caller registered with tag_class(), which is not ours to police.
-    assert not (
-        BUILTIN_TAGS - HTML_ELEMENTS - DEPRECATED_ELEMENTS - EXPERIMENTAL_ELEMENTS
-    )
+    assert not BUILTIN_TAGS - compat.ELEMENTS, f"unknown to {compat.SOURCE}"
+
+
+def test_status_sets_match_mdn():
+    """The library cannot read a fixture at runtime, so it keeps its own copy.
+
+    Refreshing the snapshot with `just compat` fails here when a browser
+    retires something, which is the moment to add or reclassify a class.
+    """
+    assert DEPRECATED_ELEMENTS == compat.DEPRECATED
+    assert EXPERIMENTAL_ELEMENTS == compat.EXPERIMENTAL
+
+
+def test_elements_without_an_mdn_page_match_mdn():
+    """A null mdn_url upstream is why a docstring carries no link."""
+    assert django_div._UNDOCUMENTED == compat.UNDOCUMENTED
 
 
 @pytest.mark.parametrize(
@@ -185,7 +82,7 @@ def test_categories_only_name_real_tags(category):
 def test_status_sets_do_not_overlap():
     """A tag is current, retired, or provisional, never two of them."""
     assert not DEPRECATED_ELEMENTS & EXPERIMENTAL_ELEMENTS
-    assert not (DEPRECATED_ELEMENTS | EXPERIMENTAL_ELEMENTS) & HTML_ELEMENTS
+    assert BUILTIN_TAGS == HTML_ELEMENTS | DEPRECATED_ELEMENTS | EXPERIMENTAL_ELEMENTS
 
 
 # --- deprecated and experimental elements -----------------------------------
@@ -513,11 +410,6 @@ def test_builtin_docstrings_link_to_mdn(tag):
         f"developer.mozilla.org/en-US/docs/Web/HTML/Element/{tag}"
         in TAG_CLASSES[tag].__doc__
     )
-
-
-def test_only_new_elements_go_undocumented():
-    """A missing MDN page is a fact about a brand new element, not a typo."""
-    assert django_div._UNDOCUMENTED <= EXPERIMENTAL_ELEMENTS
 
 
 @pytest.mark.parametrize("tag", sorted(DEPRECATED_ELEMENTS | EXPERIMENTAL_ELEMENTS))

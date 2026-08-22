@@ -23,6 +23,7 @@ group: pytest, ruff, prek, Django, and both parser backends.
 | `just docs-build` | Build the docs into `site/`, plus llms.txt |
 | `just example` | Run `examples/example.py` |
 | `just stub` | Regenerate `src/django_div/__init__.pyi` |
+| `just compat` | Refresh the MDN compat snapshot the tests read |
 | `just install-hooks` | Install the prek git hooks |
 | `just update-hooks` | Update pinned hook versions |
 | `just build` | Build the sdist and the wheel into `dist/` |
@@ -43,8 +44,11 @@ src/django_div/__init__.pyi  generated type stub, see `just stub`
 src/django_div/django.py     the Django integration
 tests/test_django_div.py     core behavior
 tests/test_tags.py           every tag, parametrized
+tests/test_attributes.py     global attributes and input types
 tests/test_django.py         the Django integration
 tests/components.py          components the Django tests render
+tests/compat.py              the compat snapshot, as sets
+tests/data/compat.json       generated MDN snapshot, see `just compat`
 examples/example.py          a runnable tour
 docs/                        this site
 ```
@@ -71,9 +75,19 @@ isn't obvious from reading.
 
 Every generated tag is covered by parametrized tests over `TAG_CLASSES`,
 which check rendering empty and with attributes and children, category
-behavior, and both round trips. Two tests compare the generated set against
-the HTML living standard in both directions, so a missing or invented element
-fails.
+behavior, and both round trips. The generated set is compared in both
+directions against `tests/data/compat.json`, a distilled snapshot of
+[mdn/browser-compat-data](https://github.com/mdn/browser-compat-data), so a
+missing or invented element fails. `DEPRECATED_ELEMENTS` and
+`EXPERIMENTAL_ELEMENTS` are checked against it too, as are the global
+attribute and input type lists in `tests/test_attributes.py`.
+
+`just compat` refreshes that snapshot from the published npm package. It is
+committed rather than fetched during a test run, so the suite stays offline
+and deterministic, and so a status change arrives as a diff someone reads:
+BCD itself is 1.3 MB of per-browser version tables that churn with every
+Chrome release, and the snapshot is the ~20 KB anyone would actually look at.
+A refresh that moves something fails the suite until the library catches up.
 
 Adding an element means adding it to `_TAGS`. If it belongs to a category,
 add it to `VOID_ELEMENTS`, `RAW_TEXT_ELEMENTS`, or `PRE_ELEMENTS` as well. The tests
