@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import re
+import warnings
 from collections.abc import Callable, Iterable, Iterator
 from functools import cache
 from html import escape
@@ -31,7 +32,9 @@ from pydantic import BaseModel, BeforeValidator, Field, SerializeAsAny
 __all__ = [
     "ATTR_NAME_RE",
     "BUILTIN_TAGS",
+    "DEPRECATED_ELEMENTS",
     "DOCUMENT_ELEMENTS",
+    "EXPERIMENTAL_ELEMENTS",
     "ITEM_CLASSES",
     "PARSERS",
     "PRE_ELEMENTS",
@@ -39,7 +42,9 @@ __all__ = [
     "TAG_CLASSES",
     "VOID_ELEMENTS",
     "Comment",
+    "DeprecatedElementWarning",
     "Doctype",
+    "ExperimentalElementWarning",
     "HtmlItem",
     "Raw",
     "Tag",
@@ -51,6 +56,7 @@ __all__ = [
     "normalize_attr",
     "parse",
     "tag_class",
+    "warn_element",
     # Generated tag classes are appended at the bottom of this module.
 ]
 
@@ -66,8 +72,40 @@ __version__ = "2026.8.2"
 #: could smuggle a second attribute into the output and must be refused.
 ATTR_NAME_RE = re.compile(r'^[^\s"\'>/=\x00-\x1f\x7f]+$')
 
+#: Elements the standard has retired. They are still generated, because real
+#: documents still contain them and parsing has to name them something, but
+#: writing one by hand warns: see warn_element().
+DEPRECATED_ELEMENTS = frozenset(
+    {
+        "acronym",
+        "big",
+        "center",
+        "dir",
+        "fencedframe",
+        "font",
+        "frame",
+        "frameset",
+        "marquee",
+        "nobr",
+        "noembed",
+        "noframes",
+        "param",
+        "plaintext",
+        "rb",
+        "rtc",
+        "strike",
+        "tt",
+        "xmp",
+    }
+)
+
 #: Wrappers a parser may invent around a fragment.
 DOCUMENT_ELEMENTS = frozenset({"body", "head", "html"})
+
+#: Elements shipping in one engine but not settled across them. Generated so
+#: they are usable, and named here so a codebase can find its own bets, but
+#: silent unless the warning is asked for: see warn_element().
+EXPERIMENTAL_ELEMENTS = frozenset({"geolocation", "model"})
 
 #: Keys Pydantic passes back when it re-validates a serialized Tag.
 FIELD_KEYS = frozenset({"attrs", "children", "tag", "type"})
@@ -98,6 +136,7 @@ VOID_ELEMENTS = frozenset(
         "br",
         "col",
         "embed",
+        "frame",
         "hr",
         "img",
         "input",
@@ -109,6 +148,32 @@ VOID_ELEMENTS = frozenset(
         "wbr",
     }
 )
+
+
+class DeprecatedElementWarning(DeprecationWarning):
+    """Raised when building an element the HTML standard has retired.
+
+    A DeprecationWarning subclass, so Python's default filters keep it quiet
+    in application code and surface it where it is actionable: test suites,
+    the REPL, and ``python -W``. Silence it everywhere with::
+
+        warnings.filterwarnings("ignore", category=DeprecatedElementWarning)
+    """
+
+
+class ExperimentalElementWarning(FutureWarning):
+    """Raised when building an element that is not settled across engines.
+
+    Ignored by default, since choosing an experimental element is a bet, not
+    a mistake. Ask for it with::
+
+        warnings.filterwarnings("default", category=ExperimentalElementWarning)
+    """
+
+
+# Appended rather than inserted, so it sits behind anything the caller or
+# ``python -W`` sets up and never overrides a filter someone chose.
+warnings.filterwarnings("ignore", category=ExperimentalElementWarning, append=True)
 
 
 @cache
@@ -268,8 +333,12 @@ def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]:
                 key: " ".join(value) if isinstance(value, list) else value
                 for key, value in node.attrs.items()
             }
-            cls = TAG_CLASSES.get(node.name)
-            item = cls(**attrs) if cls else Tag(node.name, **attrs)
+            cls = TAG_CLASSES.get(node.name, Tag)
+            # Straight to Tag.__init__, around the generated one: parsing
+            # reports what a document already contains, which is nobody's
+            # choice of element, so a deprecated tag here must not warn.
+            item = cls.__new__(cls)
+            Tag.__init__(item, node.name, **attrs)
             pending.append((node, item, verbatim))
             return item
         return None
@@ -385,9 +454,11 @@ def tag_class(tag: str, *, name: str | None = None) -> type[Tag]:
 
     def __init__(self, *children: Any, **attrs: Any) -> None:
         if is_field_payload(children, attrs=attrs):
+            # Pydantic rebuilding a dumped tree, not markup being authored.
             Tag.__init__(self, **attrs)
-        else:
-            Tag.__init__(self, tag, *children, **attrs)
+            return
+        warn_element(tag)
+        Tag.__init__(self, tag, *children, **attrs)
 
     cls = type(
         name,
@@ -400,6 +471,27 @@ def tag_class(tag: str, *, name: str | None = None) -> type[Tag]:
     )
     TAG_CLASSES[tag] = cls
     return cls
+
+
+def warn_element(tag: str) -> None:
+    """Warn if ``tag`` is a retired or unsettled element, else do nothing.
+
+    Called when markup is authored, not when it is parsed or deserialized,
+    so the warning always points at a line someone can change. Warnings
+    de-duplicate per call site, so a tag in a loop reports once.
+    """
+    if tag in DEPRECATED_ELEMENTS:
+        warnings.warn(
+            f"<{tag}> is deprecated in the HTML standard",
+            DeprecatedElementWarning,
+            stacklevel=3,
+        )
+    elif tag in EXPERIMENTAL_ELEMENTS:
+        warnings.warn(
+            f"<{tag}> is experimental and missing from most browsers",
+            ExperimentalElementWarning,
+            stacklevel=3,
+        )
 
 
 class HtmlItem(BaseModel):
@@ -664,6 +756,7 @@ ITEM_CLASSES.update(
 _TAGS = [
     "a",
     "abbr",
+    "acronym",
     "address",
     "area",
     "article",
@@ -673,12 +766,14 @@ _TAGS = [
     "base",
     "bdi",
     "bdo",
+    "big",
     "blockquote",
     "body",
     "br",
     "button",
     "canvas",
     "caption",
+    "center",
     "cite",
     "code",
     "col",
@@ -690,16 +785,22 @@ _TAGS = [
     "details",
     "dfn",
     "dialog",
+    "dir",
     "div",
     "dl",
     "dt",
     "em",
     "embed",
+    "fencedframe",
     "fieldset",
     "figcaption",
     "figure",
+    "font",
     "footer",
     "form",
+    "frame",
+    "frameset",
+    "geolocation",
     "h1",
     "h2",
     "h3",
@@ -724,10 +825,15 @@ _TAGS = [
     "main",
     "map",
     "mark",
+    "marquee",
     "menu",
     "meta",
     "meter",
+    "model",
     "nav",
+    "nobr",
+    "noembed",
+    "noframes",
     "noscript",
     "object",
     "ol",
@@ -737,11 +843,14 @@ _TAGS = [
     "p",
     "param",
     "picture",
+    "plaintext",
     "pre",
     "progress",
     "q",
+    "rb",
     "rp",
     "rt",
+    "rtc",
     "ruby",
     "s",
     "samp",
@@ -754,6 +863,7 @@ _TAGS = [
     "small",
     "source",
     "span",
+    "strike",
     "strong",
     "style",
     "sub",
@@ -771,24 +881,37 @@ _TAGS = [
     "title",
     "tr",
     "track",
+    "tt",
     "u",
     "ul",
     "var",
     "video",
     "wbr",
+    "xmp",
 ]
+
+#: Standard elements MDN has no page for yet, so their docstrings carry no
+#: link rather than one that 404s. Sourced from mdn/browser-compat-data,
+#: which records a null mdn_url for them.
+_UNDOCUMENTED = frozenset({"model"})
 
 for _tag in _TAGS:
     _cls = tag_class(_tag)
-    # Custom elements registered later get no MDN link; these are standard.
-    _cls.__doc__ = (
-        f"The HTML <{_tag}> element.\n\n"
-        f"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/{_tag}"
-    )
+    _lines = [f"The HTML <{_tag}> element."]
+    if _tag in DEPRECATED_ELEMENTS:
+        _lines.append("Deprecated: building one raises DeprecatedElementWarning.")
+    elif _tag in EXPERIMENTAL_ELEMENTS:
+        _lines.append("Experimental: not settled, and missing from most browsers.")
+    if _tag not in _UNDOCUMENTED:
+        # Custom elements registered later get no MDN link; these are standard.
+        _lines.append(
+            f"https://developer.mozilla.org/en-US/docs/Web/HTML/Element/{_tag}"
+        )
+    _cls.__doc__ = "\n\n".join(_lines)
     globals()[_cls.__name__] = _cls
     __all__.append(_cls.__name__)
 
-del _tag, _cls
+del _tag, _cls, _lines
 
 #: The elements this module generates, as opposed to any registered later by
 #: tag_class(). TAG_CLASSES grows at runtime; this does not.

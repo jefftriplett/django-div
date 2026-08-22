@@ -13,7 +13,9 @@ __version__: str
 
 ATTR_NAME_RE: re.Pattern[str]
 BUILTIN_TAGS: frozenset[str]
+DEPRECATED_ELEMENTS: frozenset[str]
 DOCUMENT_ELEMENTS: frozenset[str]
+EXPERIMENTAL_ELEMENTS: frozenset[str]
 ITEM_CLASSES: dict[str, type[HtmlItem]]
 PARSERS: tuple[str, ...]
 PRE_ELEMENTS: frozenset[str]
@@ -28,6 +30,10 @@ def marker() -> Callable[[str], str]: ...
 def normalize_attr(name: str) -> str: ...
 def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]: ...
 def tag_class(tag: str, *, name: str | None = None) -> type[Tag]: ...
+def warn_element(tag: str) -> None: ...
+
+class DeprecatedElementWarning(DeprecationWarning): ...
+class ExperimentalElementWarning(FutureWarning): ...
 
 class HtmlItem(BaseModel):
     def __html__(self) -> str: ...
@@ -80,6 +86,9 @@ class A(Tag):
 class Abbr(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Acronym(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Address(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -107,6 +116,9 @@ class Bdi(Tag):
 class Bdo(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Big(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Blockquote(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -123,6 +135,9 @@ class Canvas(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Caption(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Center(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Cite(Tag):
@@ -158,6 +173,9 @@ class Dfn(Tag):
 class Dialog(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Dir(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Div(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -173,6 +191,9 @@ class Em(Tag):
 class Embed(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Fencedframe(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Fieldset(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -182,10 +203,22 @@ class Figcaption(Tag):
 class Figure(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Font(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Footer(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Form(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Frame(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Frameset(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Geolocation(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class H1(Tag):
@@ -260,6 +293,9 @@ class Map(Tag):
 class Mark(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Marquee(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Menu(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -269,7 +305,19 @@ class Meta(Tag):
 class Meter(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Model(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Nav(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Nobr(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Noembed(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Noframes(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Noscript(Tag):
@@ -299,6 +347,9 @@ class Param(Tag):
 class Picture(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Plaintext(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Pre(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -308,10 +359,16 @@ class Progress(Tag):
 class Q(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Rb(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Rp(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Rt(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Rtc(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Ruby(Tag):
@@ -348,6 +405,9 @@ class Source(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Span(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Strike(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Strong(Tag):
@@ -401,6 +461,9 @@ class Tr(Tag):
 class Track(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Tt(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class U(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -416,10 +479,14 @@ class Video(Tag):
 class Wbr(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Xmp(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 __all__ = [
     "A",
     "ATTR_NAME_RE",
     "Abbr",
+    "Acronym",
     "Address",
     "Area",
     "Article",
@@ -430,36 +497,48 @@ __all__ = [
     "Base",
     "Bdi",
     "Bdo",
+    "Big",
     "Blockquote",
     "Body",
     "Br",
     "Button",
     "Canvas",
     "Caption",
+    "Center",
     "Cite",
     "Code",
     "Col",
     "Colgroup",
     "Comment",
+    "DEPRECATED_ELEMENTS",
     "DOCUMENT_ELEMENTS",
     "Data",
     "Datalist",
     "Dd",
     "Del",
+    "DeprecatedElementWarning",
     "Details",
     "Dfn",
     "Dialog",
+    "Dir",
     "Div",
     "Dl",
     "Doctype",
     "Dt",
+    "EXPERIMENTAL_ELEMENTS",
     "Em",
     "Embed",
+    "ExperimentalElementWarning",
+    "Fencedframe",
     "Fieldset",
     "Figcaption",
     "Figure",
+    "Font",
     "Footer",
     "Form",
+    "Frame",
+    "Frameset",
+    "Geolocation",
     "H1",
     "H2",
     "H3",
@@ -486,10 +565,15 @@ __all__ = [
     "Main",
     "Map",
     "Mark",
+    "Marquee",
     "Menu",
     "Meta",
     "Meter",
+    "Model",
     "Nav",
+    "Nobr",
+    "Noembed",
+    "Noframes",
     "Noscript",
     "Object",
     "Ol",
@@ -501,13 +585,16 @@ __all__ = [
     "PRE_ELEMENTS",
     "Param",
     "Picture",
+    "Plaintext",
     "Pre",
     "Progress",
     "Q",
     "RAW_TEXT_ELEMENTS",
     "Raw",
+    "Rb",
     "Rp",
     "Rt",
+    "Rtc",
     "Ruby",
     "S",
     "Samp",
@@ -520,6 +607,7 @@ __all__ = [
     "Small",
     "Source",
     "Span",
+    "Strike",
     "Strong",
     "Style",
     "Sub",
@@ -540,12 +628,14 @@ __all__ = [
     "Title",
     "Tr",
     "Track",
+    "Tt",
     "U",
     "Ul",
     "VOID_ELEMENTS",
     "Var",
     "Video",
     "Wbr",
+    "Xmp",
     "best_parser",
     "from_html",
     "is_collection",
@@ -553,4 +643,5 @@ __all__ = [
     "normalize_attr",
     "parse",
     "tag_class",
+    "warn_element",
 ]
