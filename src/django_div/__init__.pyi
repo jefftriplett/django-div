@@ -17,15 +17,18 @@ DEPRECATED_ELEMENTS: frozenset[str]
 DOCUMENT_ELEMENTS: frozenset[str]
 EXPERIMENTAL_ELEMENTS: frozenset[str]
 ITEM_CLASSES: dict[str, type[HtmlItem]]
+JSON_LD_ESCAPES: dict[int, str]
 PARSERS: tuple[str, ...]
 PRE_ELEMENTS: frozenset[str]
 RAW_TEXT_ELEMENTS: frozenset[str]
 TAG_CLASSES: dict[str, type[Tag]]
 VOID_ELEMENTS: frozenset[str]
 
+def as_json(value: Any) -> Any: ...
 def best_parser() -> str: ...
 def from_html(html: str, *, parser: str | None = None) -> Any: ...
 def is_collection(value: Any) -> bool: ...
+def json_ld(data: Any, **attrs: Any) -> Tag: ...
 def marker() -> Callable[[str], str]: ...
 def normalize_attr(name: str) -> str: ...
 def parse(html: str, *, parser: str | None = None) -> list[HtmlItem]: ...
@@ -557,6 +560,7 @@ __all__ = [
     "Img",
     "Input",
     "Ins",
+    "JSON_LD_ESCAPES",
     "Kbd",
     "Label",
     "Legend",
@@ -636,9 +640,11 @@ __all__ = [
     "Video",
     "Wbr",
     "Xmp",
+    "as_json",
     "best_parser",
     "from_html",
     "is_collection",
+    "json_ld",
     "marker",
     "normalize_attr",
     "parse",

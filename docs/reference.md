@@ -136,6 +136,14 @@ closed early and parse the remainder as live markup.
 :   Python attribute spelling to HTML: `class_` to `class`. A trailing
     underscore is dropped, so any Python keyword works as `keyword_`.
 
+`json_ld(data, **attrs)`
+:   A `<script type="application/ld+json">` holding `data`, which may be a
+    Pydantic model, a dict, a list, or any mix. `None` fields are dropped and
+    the JSON is escaped so no string in it can end the script element.
+
+`as_json(value)`
+:   The `json.dumps(..., default=...)` hook that reaches Pydantic models.
+
 `render_attrs(attrs)` / `render_class(value)` / `render_style(value)`
 :   The attribute rendering helpers.
 
@@ -163,6 +171,7 @@ closed early and parse the remainder as live markup.
 | `PRE_ELEMENTS` | `pre`, `textarea` |
 | `DOCUMENT_ELEMENTS` | `html`, `head`, `body` |
 | `ATTR_NAME_RE` | What a rendered attribute name may look like |
+| `JSON_LD_ESCAPES` | Rewrites applied to JSON going inside a `<script>` |
 | `PARSERS` | Parser preference order |
 
 ## Element classes

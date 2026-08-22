@@ -116,6 +116,54 @@ produces that class too. That is the point, but it means the registry grows at
 runtime. `BUILTIN_TAGS` is the fixed set this library ships. For a one-off
 that shouldn't be registered, `Tag("my-widget", ...)` skips it.
 
+### JSON-LD from a Pydantic model
+
+Schema.org markup is JSON in a `<script>`, and a `<script>` is raw text: the
+parser reads to the closing tag without decoding entities, so a name or
+description containing `</script>` would close the tag early and the rest of
+the payload would land on the page as live markup. `json_ld()` writes the
+dangerous characters as the `\uXXXX` escapes JSON already understands, which
+changes no data and makes that impossible.
+
+`@context` and `@type` are not Python names, so they have to be aliases:
+
+```python
+from pydantic import BaseModel, ConfigDict, Field
+
+from django_div import Head, Title, json_ld
+
+
+class Organization(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    context: str = Field("https://schema.org", alias="@context")
+    type: str = Field("Organization", alias="@type")
+    name: str
+    url: str
+    logo: str | None = None
+
+
+head = Head(
+    Title("Acme"),
+    json_ld(Organization(name="Acme", url="https://acme.example")),
+)
+```
+
+`logo` is `None`, so it never renders. A JSON-LD null is not a value, so
+dropping it is what the format means anyway.
+
+Pass a list to emit several objects at once, and read one back out of a page
+with `json.loads(tag.text)`:
+
+```python
+import json
+
+from django_div import from_html
+
+page = from_html(str(head))
+data = json.loads(page.find("script", type="application/ld+json").text)
+```
+
 ### SVG icons
 
 SVG elements aren't generated, because SVG's `<text>` would collide with the

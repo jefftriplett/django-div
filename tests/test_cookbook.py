@@ -11,6 +11,7 @@ import pytest
 from django import forms
 from django.template import Context, Engine, Library
 from django.test import RequestFactory
+from pydantic import BaseModel, ConfigDict, Field
 
 from django_div import (
     H1,
@@ -44,6 +45,7 @@ from django_div import (
     Tr,
     Ul,
     from_html,
+    json_ld,
     parse,
     tag_class,
 )
@@ -130,6 +132,36 @@ def test_custom_elements():
     assert str(MyWidget("hi", data_state="ready")) == (
         '<my-widget data-state="ready">hi</my-widget>'
     )
+
+
+class Organization(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    context: str = Field("https://schema.org", alias="@context")
+    type: str = Field("Organization", alias="@type")
+    name: str
+    url: str
+    logo: str | None = None
+
+
+def test_json_ld_from_a_pydantic_model():
+    head = Head(
+        Title("Acme"),
+        json_ld(Organization(name="Acme", url="https://acme.example")),
+    )
+    assert str(head) == (
+        "<head><title>Acme</title>"
+        '<script type="application/ld+json">'
+        '{"@context":"https://schema.org","@type":"Organization",'
+        '"name":"Acme","url":"https://acme.example"}'
+        "</script></head>"
+    )
+
+    page = from_html(str(head))
+    data = json.loads(page.find("script", type="application/ld+json").text)
+    assert data["name"] == "Acme"
+    # logo is None, so it never reached the markup.
+    assert "logo" not in data
 
 
 def icon(name, size=16):

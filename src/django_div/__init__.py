@@ -36,6 +36,7 @@ __all__ = [
     "DOCUMENT_ELEMENTS",
     "EXPERIMENTAL_ELEMENTS",
     "ITEM_CLASSES",
+    "JSON_LD_ESCAPES",
     "PARSERS",
     "PRE_ELEMENTS",
     "RAW_TEXT_ELEMENTS",
@@ -49,9 +50,11 @@ __all__ = [
     "Raw",
     "Tag",
     "Text",
+    "as_json",
     "best_parser",
     "from_html",
     "is_collection",
+    "json_ld",
     "marker",
     "normalize_attr",
     "parse",
@@ -112,6 +115,19 @@ FIELD_KEYS = frozenset({"attrs", "children", "tag", "type"})
 
 #: Discriminator value -> class, for rebuilding leaves from a dump.
 ITEM_CLASSES: dict[str, type[HtmlItem]] = {}
+
+#: Rewrites applied to JSON before it goes inside a <script>. A JSON string
+#: may spell any character as \uXXXX, so escaping these changes no data while
+#: making "</script" and "<!--" impossible to write. The two line separators
+#: are legal in JSON but end a statement in JavaScript. Django's json_script
+#: filter escapes the same first three.
+JSON_LD_ESCAPES = {
+    ord("<"): "\\u003c",
+    ord(">"): "\\u003e",
+    ord("&"): "\\u0026",
+    ord("\u2028"): "\\u2028",
+    ord("\u2029"): "\\u2029",
+}
 
 #: Parsers to try, best first. lxml is both faster and more correct than the
 #: stdlib parser, which nests implicit closes (``<p>a<p>b``) instead of
@@ -225,6 +241,22 @@ def as_html_item(value: Any) -> Any:
     return cls(**value) if cls else value
 
 
+def as_json(value: Any) -> Any:
+    """Coerce what json.dumps cannot serialize on its own: Pydantic models.
+
+    Pass it as ``json.dumps(value, default=as_json)``. Nested models are
+    reached too, so a list of them, or a model with a model field, works
+    without dumping each one by hand.
+    """
+    if isinstance(value, BaseModel):
+        # by_alias, because "@context" and "@type" are not Python names and
+        # have to be declared as aliases. mode="json" so a datetime, Decimal,
+        # or UUID field arrives as a JSON primitive rather than an object
+        # json.dumps would choke on next.
+        return value.model_dump(by_alias=True, exclude_none=True, mode="json")
+    raise TypeError(f"cannot serialize {type(value).__name__} as JSON")
+
+
 def from_html(html: str, *, parser: str | None = None) -> Any:
     """Parse HTML, returning a single item when there is one root.
 
@@ -282,6 +314,34 @@ def iter_children(children: Iterable[Any]) -> Iterator[HtmlItem]:
         else:
             # str() resolves lazy objects, such as Django's gettext_lazy.
             yield Text(content=str(child))
+
+
+def json_ld(data: Any, **attrs: Any) -> Tag:
+    """Render ``data`` as a ``<script type="application/ld+json">`` tag.
+
+    Takes a Pydantic model, a dict, a list, or any mix of them::
+
+        >>> print(json_ld({"@type": "Person", "name": "Ada"}))
+        <script type="application/ld+json">{"@type":"Person","name":"Ada"}</script>
+
+    ``None`` fields are dropped, which is what JSON-LD means by them anyway:
+    a null value is not a value, so writing one only adds bytes.
+
+    The JSON is escaped so that no string in it can end the script element or
+    open an HTML comment, per JSON_LD_ESCAPES. That matters because a
+    ``<script>`` is raw text -- a name or description holding ``</script>``
+    would otherwise close the tag early and turn the rest of the payload into
+    live markup. Without the escaping this raises rather than injects, but
+    raising on a legitimate product description is not much better.
+
+    Extra keyword arguments become attributes, ``type`` included, so a
+    different JSON media type is one keyword away.
+    """
+    text = json.dumps(data, default=as_json, ensure_ascii=False, separators=(",", ":"))
+    return TAG_CLASSES["script"](
+        text.translate(JSON_LD_ESCAPES),
+        **{"type": "application/ld+json", **attrs},
+    )
 
 
 def normalize_attr(name: str) -> str:
