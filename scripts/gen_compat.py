@@ -39,6 +39,13 @@ REPOSITORY = "https://github.com/mdn/browser-compat-data"
 #: attributes. It is not a name anything can be checked against.
 NOT_AN_ATTRIBUTE = "data_attributes"
 
+#: Under an element, BCD keys attributes by name and sub-features by a
+#: snake_case label: "implicit_noopener", "type_checkbox". No HTML attribute
+#: name has an underscore in it, so the underscore tells them apart. A stray
+#: sub-feature that slips through costs nothing: the tests only ask whether a
+#: name survives the trip through normalize_attr.
+SUB_FEATURE = "_"
+
 TARGET = Path(__file__).parent.parent / "tests" / "data" / "compat.json"
 
 
@@ -82,9 +89,20 @@ def standing(entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def attribute_names(group: dict[str, Any]) -> set[str]:
+    """Attribute names under a group of elements, sub-features dropped."""
+    return {
+        name
+        for element in group.values()
+        for name in element
+        if name != "__compat" and SUB_FEATURE not in name
+    }
+
+
 def build_snapshot(release: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
     """The slice of BCD the tests read, ready to serialize."""
     html = data["html"]
+    svg = data["svg"]
     return {
         "source": {
             "package": PACKAGE,
@@ -97,6 +115,13 @@ def build_snapshot(release: dict[str, Any], data: dict[str, Any]) -> dict[str, A
         },
         "global_attributes": sorted(
             name for name in html["global_attributes"] if name != NOT_AN_ATTRIBUTE
+        ),
+        "element_attributes": sorted(attribute_names(html["elements"])),
+        # SVG too: django-div builds inline SVG, and "in" and "from" are
+        # Python keywords that only appear over here.
+        "svg_attributes": sorted(
+            attribute_names(svg["elements"])
+            | {n for n in svg["global_attributes"] if SUB_FEATURE not in n}
         ),
         "input_types": sorted(
             name.removeprefix("type_")
@@ -127,6 +152,8 @@ def main() -> None:
         f"{sum(e['deprecated'] for e in elements.values())} deprecated, "
         f"{sum(e['experimental'] for e in elements.values())} experimental, "
         f"{len(snapshot['global_attributes'])} global attributes, "
+        f"{len(snapshot['element_attributes'])} element attributes, "
+        f"{len(snapshot['svg_attributes'])} SVG attributes, "
         f"{len(snapshot['input_types'])} input types",
         file=sys.stderr,
     )

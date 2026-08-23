@@ -157,7 +157,10 @@ closed early and parse the remainder as live markup.
 
 `normalize_attr(name)`
 :   Python attribute spelling to HTML: `class_` to `class`. A trailing
-    underscore is dropped, so any Python keyword works as `keyword_`.
+    underscore is dropped, so any Python keyword works as `keyword_`, and
+    remaining underscores become hyphens. Seven attribute names across HTML
+    and SVG need the underscore; see
+    [Reserved words](building.md#reserved-words).
 
 `render_json_ld(data)`
 :   Serialize a model, dict, or list as JSON that is safe inside a

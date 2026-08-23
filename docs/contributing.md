@@ -44,7 +44,7 @@ src/django_div/__init__.pyi  generated type stub, see `just stub`
 src/django_div/django.py     the Django integration
 tests/test_django_div.py     core behavior
 tests/test_tags.py           every tag, parametrized
-tests/test_attributes.py     global attributes and input types
+tests/test_attributes.py     every attribute name, and input types
 tests/test_django.py         the Django integration
 tests/components.py          components the Django tests render
 tests/compat.py              the compat snapshot, as sets

@@ -65,7 +65,8 @@ Div(**{"hx-on:click": "alert(1)", "@click": "open = true"})
 ```
 
 There is no exception table. The rule above derives every attribute name on
-its own.
+its own, and the seven rows above are the complete list: `tests/test_attributes.py`
+checks them against every attribute name MDN tracks, for HTML and SVG both.
 
 ### Boolean attributes
 

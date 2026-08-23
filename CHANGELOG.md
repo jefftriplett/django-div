@@ -5,6 +5,14 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+### Changed
+
+- The attribute tests now walk every attribute name MDN tracks, for SVG as
+  well as HTML, rather than the 30 global ones. That pins the "Reserved
+  words" table in the docs to the real list: seven names collide with a
+  Python keyword (`as`, `async`, `class`, `for`, `from`, `in`, `is`), and a
+  snapshot refresh fails if that stops being true in either direction.
+
 ## 2026.8.3 - 2026-08-22
 
 ### Added

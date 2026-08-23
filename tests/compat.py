@@ -12,6 +12,7 @@ runtime. ``tests/test_tags.py`` asserts the two agree.
 """
 
 import json
+import keyword
 from pathlib import Path
 
 SNAPSHOT = json.loads((Path(__file__).parent / "data" / "compat.json").read_text())
@@ -35,4 +36,20 @@ CURRENT = ELEMENTS - DEPRECATED - EXPERIMENTAL
 UNDOCUMENTED = frozenset(t for t, s in _ELEMENTS.items() if not s["mdn_url"])
 
 GLOBAL_ATTRIBUTES = frozenset(SNAPSHOT["global_attributes"])
+
+#: Every attribute name BCD tracks under an element, so `for`, `async`, and
+#: the hyphenated ones are covered and not just the globals.
+ELEMENT_ATTRIBUTES = frozenset(SNAPSHOT["element_attributes"])
+
+#: Every attribute name under an SVG element, plus the SVG globals. Kept
+#: apart from HTML because django-div builds inline SVG, and because "in"
+#: and "from" are Python keywords that only turn up over here.
+SVG_ATTRIBUTES = frozenset(SNAPSHOT["svg_attributes"])
+
+#: Every attribute name a document can reach for, in either vocabulary.
+ATTRIBUTES = GLOBAL_ATTRIBUTES | ELEMENT_ATTRIBUTES | SVG_ATTRIBUTES
+
+#: The names that collide with a Python keyword, so a caller has to spell
+#: them with a trailing underscore. The table in docs/building.md lists these.
+KEYWORD_ATTRIBUTES = frozenset(a for a in ATTRIBUTES if keyword.iskeyword(a))
 INPUT_TYPES = frozenset(SNAPSHOT["input_types"])
