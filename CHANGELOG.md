@@ -5,6 +5,32 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+### Added
+
+- `Fragment(*items)` groups siblings without a wrapping element, with shared
+  rendering, traversal, searches, text extraction, Markdown support, and JSON
+  round trips. Works as a Django component result and with `as_response()`.
+- `Tag.classes` and `Tag.has_class(name)` expose class tokens consistently
+  across string, iterable, and mapping attributes. Attribute searches retain
+  exact equality.
+- `Tag.get_text(separator="", strip=False)` and the same method on fragments
+  join text nodes, optionally trimming each and dropping empty nodes.
+
+### Fixed
+
+- Calling a void element to append children now raises instead of silently
+  dropping them during rendering.
+- Markdown code fences recognize language classes supplied as iterables or
+  conditional mappings.
+- Component context filtering excludes positional-only and variadic positional
+  parameter names.
+
+### Performance
+
+- Partition Markdown list children in one pass without comparing subtrees.
+- Cache keyword signature metadata for up to 256 ordinary function components;
+  callable instances remain uncached and no rendered output is cached.
+
 ### Changed
 
 - The attribute tests now walk every attribute name MDN tracks, for SVG as

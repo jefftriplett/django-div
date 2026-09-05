@@ -24,6 +24,7 @@ Nothing here is imported by ``django_div`` itself, so Django stays optional.
 from __future__ import annotations
 
 import inspect
+from functools import lru_cache
 from importlib import import_module
 from typing import Any
 
@@ -78,6 +79,30 @@ def csrf_input(request: Any) -> Raw:
     )
 
 
+def _component_parameters(component: Component) -> frozenset[str] | None:
+    """Accepted keyword names, or None when the whole context is needed."""
+    try:
+        signature = inspect.signature(component)
+    except (TypeError, ValueError):
+        return None
+    if any(
+        parameter.kind is inspect.Parameter.VAR_KEYWORD
+        for parameter in signature.parameters.values()
+    ):
+        return None
+    return frozenset(
+        name
+        for name, parameter in signature.parameters.items()
+        if parameter.kind
+        in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
+    )
+
+
+@lru_cache(maxsize=256)
+def _function_parameters(component: Component) -> frozenset[str] | None:
+    return _component_parameters(component)
+
+
 def render_component(component: Component, *, context: dict[str, Any]) -> str:
     """Call a component with the parts of the context it asks for.
 
@@ -86,23 +111,18 @@ def render_component(component: Component, *, context: dict[str, Any]) -> str:
     processors can add ``user``, ``perms``, and friends without breaking
     every component signature.
     """
-    try:
-        signature = inspect.signature(component)
-    except (TypeError, ValueError):  # pragma: no cover - builtins, C callables
-        return str(component(**context))
-
-    takes_everything = any(
-        parameter.kind is inspect.Parameter.VAR_KEYWORD
-        for parameter in signature.parameters.values()
+    # Cache ordinary functions only: callable instances can be unhashable or
+    # expose a signature that changes with their state.
+    parameters = (
+        _function_parameters(component)
+        if inspect.isfunction(component)
+        else _component_parameters(component)
     )
-    if takes_everything:
-        accepted = context
-    else:
-        accepted = {
-            name: value
-            for name, value in context.items()
-            if name in signature.parameters
-        }
+    accepted = (
+        context
+        if parameters is None
+        else {name: value for name, value in context.items() if name in parameters}
+    )
 
     result = component(**accepted)
     return result.render() if isinstance(result, HtmlItem) else str(result)

@@ -46,6 +46,7 @@ __all__ = [
     "DeprecatedElementWarning",
     "Doctype",
     "ExperimentalElementWarning",
+    "Fragment",
     "HtmlItem",
     "JsonLd",
     "Raw",
@@ -606,85 +607,31 @@ class Raw(HtmlItem):
         return marker()(self.content)
 
 
-class Tag(HtmlItem):
-    """An HTML element: a tag name, children, and attributes.
+class _Container(HtmlItem):
+    """Shared tree operations for elements and wrapper-free fragments."""
 
-    Children are positional, attributes are keyword arguments::
-
-        Tag("div", Tag("p", "hi"), class_="card")
-    """
-
-    type: Literal["tag"] = "tag"
-    tag: str
     # SerializeAsAny keeps subclass fields in model_dump(); Pydantic v2
     # otherwise serializes each child against the declared HtmlItem schema,
     # which has no fields, so a tree would dump as a list of empty dicts.
     children: list[
         SerializeAsAny[Annotated[HtmlItem, BeforeValidator(as_html_item)]]
     ] = Field(default_factory=list)
-    attrs: dict[str, Any] = Field(default_factory=dict)
-
-    def __init__(
-        self, _tag: str | None = None, /, *children: Any, **attrs: Any
-    ) -> None:
-        # _tag is positional-only and children are variadic, so everything a
-        # caller names is an attribute. That frees every possible attribute
-        # name, including "tag", and makes the rule enforced by the signature
-        # rather than by convention.
-        if _tag is None:
-            # Pydantic re-validation reaches here with fields as keywords;
-            # a caller who passed an element name is always building markup,
-            # even if the attributes happen to be named "tag" and "attrs".
-            if is_field_payload(children, attrs=attrs):
-                super().__init__(**attrs)
-                return
-            raise TypeError(
-                "Tag() needs an element name as its first positional argument, "
-                "as in Tag('div', ...)"
-            )
-        items = list(iter_children(children))
-        if items and _tag in VOID_ELEMENTS:
-            # Rendering would drop them silently, which hides the mistake.
-            raise ValueError(f"<{_tag}> is a void element and cannot have children")
-        super().__init__(
-            tag=_tag,
-            children=items,
-            attrs={normalize_attr(key): value for key, value in attrs.items()},
-        )
-
-    @property
-    def is_raw_text(self) -> bool:
-        return self.tag in RAW_TEXT_ELEMENTS
-
-    @property
-    def is_void(self) -> bool:
-        return self.tag in VOID_ELEMENTS
 
     @property
     def text(self) -> str:
         """All text in this subtree, unescaped."""
         return "".join(item.content for item in self.walk() if isinstance(item, Text))
 
-    @classmethod
-    def model_validate(cls, obj: Any, **kwargs: Any) -> Tag:
-        """Validate, restoring the element class named by ``tag``.
+    def get_text(self, separator: str = "", *, strip: bool = False) -> str:
+        """Join text nodes, optionally stripping each and dropping empty ones.
 
-        Children go through as_html_item, but the root is built by whichever
-        class was asked, so ``Tag.model_validate`` would flatten a Div into a
-        plain Tag without this.
+        The separator goes between text nodes, including inline elements;
+        this does not infer block boundaries or insert breaks for <br>.
         """
-        if cls is Tag and isinstance(obj, dict):
-            target = TAG_CLASSES.get(obj.get("tag"))
-            if target is not None:
-                return target.model_validate(obj, **kwargs)
-        return super().model_validate(obj, **kwargs)
-
-    @classmethod
-    def model_validate_json(cls, json_data: str | bytes, **kwargs: Any) -> Tag:
-        """Parse JSON, restoring the element class named by ``tag``."""
-        if cls is Tag:
-            return cls.model_validate(json.loads(json_data), **kwargs)
-        return super().model_validate_json(json_data, **kwargs)
+        parts = (item.content for item in self.walk() if isinstance(item, Text))
+        if strip:
+            parts = (text for part in parts if (text := part.strip()))
+        return separator.join(parts)
 
     def find(self, tag: str | None = None, **attrs: Any) -> Tag | None:
         """The first descendant tag matching, or None.
@@ -723,17 +670,8 @@ class Tag(HtmlItem):
         while stack:
             item = stack.pop()
             yield item
-            if isinstance(item, Tag):
+            if isinstance(item, _Container):
                 stack.extend(reversed(item.children))
-
-    def __call__(self, *children: Any) -> Tag:
-        """Return a copy with more children, for building in stages."""
-        clone = self.model_copy()
-        # model_copy is shallow: without these, the clone would share the
-        # original's containers, and mutating one would mutate the other.
-        clone.attrs = dict(self.attrs)
-        clone.children = [*self.children, *iter_children(children)]
-        return clone
 
     def __str__(self) -> str:
         # An explicit stack rather than recursion, so rendering neither
@@ -746,6 +684,8 @@ class Tag(HtmlItem):
             node = stack.pop()
             if isinstance(node, str):
                 parts.append(node)
+            elif isinstance(node, Fragment) and type(node).__str__ is Fragment.__str__:
+                stack.extend(reversed(node.children))
             elif isinstance(node, Tag) and type(node).__str__ is Tag.__str__:
                 attrs = render_attrs(node.attrs)
                 if node.is_void:
@@ -763,6 +703,140 @@ class Tag(HtmlItem):
                 parts.append(str(node))
         return marker()("".join(parts))
 
+
+class Fragment(_Container):
+    """Sibling items rendered without a wrapping element.
+
+    Accepts the same positional children as Tag. The keyword fields are
+    reserved for Pydantic deserialization.
+    """
+
+    type: Literal["fragment"] = "fragment"
+
+    def __init__(
+        self,
+        *items: Any,
+        children: list[Any] | None = None,
+        type: Literal["fragment"] = "fragment",
+    ) -> None:
+        if items and children is not None:
+            raise TypeError("pass positional children or children=, not both")
+        super().__init__(
+            type=type,
+            children=list(iter_children(items)) if children is None else children,
+        )
+
+    def __call__(self, *children: Any) -> Fragment:
+        """Return a shallow copy with more children."""
+        return self.model_copy(
+            update={"children": [*self.children, *iter_children(children)]}
+        )
+
+
+def _unwrap_fragments(children: list[HtmlItem]) -> Iterator[HtmlItem]:
+    """Read direct children through fragments, preserving their order."""
+    stack = list(reversed(children))
+    while stack:
+        child = stack.pop()
+        if isinstance(child, Fragment):
+            stack.extend(reversed(child.children))
+        else:
+            yield child
+
+
+class Tag(_Container):
+    """An HTML element: a tag name, children, and attributes.
+
+    Children are positional, attributes are keyword arguments::
+
+        Tag("div", Tag("p", "hi"), class_="card")
+    """
+
+    type: Literal["tag"] = "tag"
+    tag: str
+    attrs: dict[str, Any] = Field(default_factory=dict)
+
+    def __init__(
+        self, _tag: str | None = None, /, *children: Any, **attrs: Any
+    ) -> None:
+        # _tag is positional-only and children are variadic, so everything a
+        # caller names is an attribute. That frees every possible attribute
+        # name, including "tag", and makes the rule enforced by the signature
+        # rather than by convention.
+        if _tag is None:
+            # Pydantic re-validation reaches here with fields as keywords;
+            # a caller who passed an element name is always building markup,
+            # even if the attributes happen to be named "tag" and "attrs".
+            if is_field_payload(children, attrs=attrs):
+                super().__init__(**attrs)
+                return
+            raise TypeError(
+                "Tag() needs an element name as its first positional argument, "
+                "as in Tag('div', ...)"
+            )
+        items = list(iter_children(children))
+        if items and _tag in VOID_ELEMENTS:
+            # Rendering would drop them silently, which hides the mistake.
+            raise ValueError(f"<{_tag}> is a void element and cannot have children")
+        super().__init__(
+            tag=_tag,
+            children=items,
+            attrs={normalize_attr(key): value for key, value in attrs.items()},
+        )
+
+    @property
+    def classes(self) -> list[str]:
+        """Class tokens in rendering order, from a string, iterable, or mapping."""
+        value = self.attrs.get("class")
+        if value is None or isinstance(value, bool):
+            return []
+        return render_class(value).split()
+
+    def has_class(self, name: str) -> bool:
+        """Whether this element has the exact class token."""
+        return name in self.classes
+
+    @property
+    def is_raw_text(self) -> bool:
+        return self.tag in RAW_TEXT_ELEMENTS
+
+    @property
+    def is_void(self) -> bool:
+        return self.tag in VOID_ELEMENTS
+
+    @classmethod
+    def model_validate(cls, obj: Any, **kwargs: Any) -> Tag:
+        """Validate, restoring the element class named by ``tag``.
+
+        Children go through as_html_item, but the root is built by whichever
+        class was asked, so ``Tag.model_validate`` would flatten a Div into a
+        plain Tag without this.
+        """
+        if cls is Tag and isinstance(obj, dict):
+            target = TAG_CLASSES.get(obj.get("tag"))
+            if target is not None:
+                return target.model_validate(obj, **kwargs)
+        return super().model_validate(obj, **kwargs)
+
+    @classmethod
+    def model_validate_json(cls, json_data: str | bytes, **kwargs: Any) -> Tag:
+        """Parse JSON, restoring the element class named by ``tag``."""
+        if cls is Tag:
+            return cls.model_validate(json.loads(json_data), **kwargs)
+        return super().model_validate_json(json_data, **kwargs)
+
+    def __call__(self, *children: Any) -> Tag:
+        """Return a copy with more children, for building in stages."""
+        items = [*self.children, *iter_children(children)]
+        if self.is_void and items:
+            raise ValueError(f"<{self.tag}> is a void element and cannot have children")
+        clone = self.model_copy()
+        # model_copy is shallow: without these, the clone would share the
+        # original's containers, and mutating one would mutate the other.
+        clone.attrs = dict(self.attrs)
+        clone.children = items
+        return clone
+
     def render_raw_text(self) -> str:
         """Render <script>/<style> content without HTML-escaping it.
 
@@ -772,7 +846,7 @@ class Tag(HtmlItem):
         """
         content = "".join(
             child.content if isinstance(child, (Text, Raw)) else str(child)
-            for child in self.children
+            for child in _unwrap_fragments(self.children)
         )
         if f"</{self.tag}" in content.lower():
             raise ValueError(
@@ -793,7 +867,14 @@ class Text(HtmlItem):
 
 
 ITEM_CLASSES.update(
-    {"comment": Comment, "doctype": Doctype, "raw": Raw, "tag": Tag, "text": Text}
+    {
+        "comment": Comment,
+        "doctype": Doctype,
+        "fragment": Fragment,
+        "raw": Raw,
+        "tag": Tag,
+        "text": Text,
+    }
 )
 
 

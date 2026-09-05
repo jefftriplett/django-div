@@ -150,3 +150,34 @@ from_html('<svg viewBox="0 0 24 24"></svg>').attrs
 
   Building SVG keeps the case. Reading it back does not, so repair the names
   yourself if you must round-trip inline SVG.
+
+
+## Class tokens and readable text
+
+Search attributes use exact equality. To find elements carrying a class
+among several tokens, filter the lazy iterator:
+
+```python
+links = [link for link in page.iter_find("a") if link.has_class("external")]
+page.get_text(" ", strip=True)  # trim text nodes and join with spaces
+```
+
+`link.classes` gives the token list for string, iterable, or mapping class
+values. `has_class()` reflects edits to `attrs["class"]` immediately.
+
+## Working with multiple roots
+
+Use a `Fragment` when you want multiple roots to act as one renderable tree:
+
+```python
+from django_div import Fragment, parse
+
+content = Fragment(parse("<h1>Title</h1><p>Body</p>"))
+content.find("p").text          # 'Body'
+content.get_text(" ", strip=True)  # 'Title Body'
+str(content)                   # '<h1>Title</h1><p>Body</p>'
+```
+
+Wrapping does not change the parser's handling of whitespace or its return
+types. Fragment boundaries are Python tree structure and have no HTML marker,
+so parsing rendered HTML does not restore those boundaries; JSON does.

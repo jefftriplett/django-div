@@ -1,5 +1,7 @@
 """to_markdown() and from_markdown()."""
 
+import pytest
+
 from django_div import (
     H1,
     H2,
@@ -358,3 +360,27 @@ def test_documented_heading_prefixes_match():
     _, pairs = read_markdown_tables()
     for tag, prefix in HEADING_TAGS.items():
         assert pairs[tag] == f"`{prefix}`", tag
+
+
+@pytest.mark.parametrize(
+    "classes",
+    [
+        ["other", "language-python"],
+        {"language-ruby": False, "language-python": True},
+        ("language-python",),
+    ],
+)
+def test_code_fence_language_accepts_class_collections(classes):
+    assert to_markdown(Pre(Code("x", class_=classes))) == "```python\nx\n```"
+
+
+def test_list_partition_does_not_compare_subtrees():
+    class NoEquality(Ul):
+        def __eq__(self, other):
+            raise AssertionError("partition must not compare trees")
+
+    nested = [NoEquality(Li(str(i))) for i in range(20)]
+    tree = Ul(Li("parent", *nested, " tail"))
+    assert to_markdown(tree) == "- parent tail\n" + "\n".join(
+        f"    - {i}" for i in range(20)
+    )

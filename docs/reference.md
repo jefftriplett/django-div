@@ -30,7 +30,7 @@ Tests enforce both halves across every element class, so this stays true.
 
 ## Items
 
-All five item types inherit from `HtmlItem`.
+All item types inherit from `HtmlItem`.
 
 ### `Tag`
 
@@ -65,7 +65,21 @@ Tag(name, *children, **attrs)
 `text`
 :   All text in the subtree, unescaped.
 
+`classes`
+:   Class tokens in rendering order, accepting the same string, iterable, or
+    mapping values as rendering. Missing or boolean values return an empty list.
+
 **Methods**
+
+`has_class(name)`
+:   Test exact class-token membership. Attribute searches still use exact
+    equality against the whole attribute.
+
+`get_text(separator="", *, strip=False)`
+:   Join text nodes with a separator. With `strip=True`, trim each node and
+    omit empty ones. Separators apply between inline text nodes too; this
+    does not infer block boundaries or insert breaks for `<br>`. Comments
+    and trusted `Raw` markup are excluded, as with `.text`.
 
 `find(tag=None, **attrs)`
 :   First matching descendant, or `None`.
@@ -88,10 +102,36 @@ Tag(name, *children, **attrs)
     closing tag.
 
 `__call__(*children)`
-:   A **copy** with more children appended.
+:   A **copy** with more children appended. Void elements reject children
+    here too; `None`, `False`, and empty collections still drop out.
 
 `model_validate(obj)` / `model_validate_json(data)`
 :   Load a tree, restoring element classes by their `tag`.
+
+### `Fragment`
+
+```python
+Fragment(*items)
+```
+
+A group of siblings with no wrapping element. Children are coerced just as
+with `Tag`: text is escaped, collections flatten, and `None`/`False` drop out.
+Fragments can contain tags and other fragments, or appear inside a tag.
+
+The fields are `type="fragment"` and `children`. A fragment supports `render`,
+`walk`, `find`, `find_all`, `iter_find`, `.text`, `get_text`, and calling it to
+create a shallow copy with additional children. `walk()` includes fragment
+nodes; searches return descendant tags. Copies have independent child lists
+but share existing child objects, just like tags.
+
+`Fragment.model_validate()` and `Fragment.model_validate_json()` restore
+nested fragments and element subclasses. Fragments also survive JSON round
+trips inside a `Tag`. The keyword arguments `children=` and `type=` are
+reserved for deserialization; use positional arguments when building.
+
+`Fragment(parse(markup))` makes multiple parsed roots usable with
+`as_response()` or as a Django component result. `parse()` and `from_html()`
+keep their existing return types. `to_markdown()` accepts fragments too.
 
 ### `JsonLd`
 
@@ -417,3 +457,9 @@ current: `deprecated` and `experimental`.
 
 `render_component(component, *, context)`
 :   Call a component with the parts of the context it declares.
+
+Ordinary function components reuse inspected keyword parameter names in a
+bounded cache of 256 functions. Callable objects are inspected each time, so
+state-dependent signatures and unhashable instances work. Function signatures
+should remain stable after first use; replacing a function creates a new
+cache entry. Rendered output and request context are never cached.

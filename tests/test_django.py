@@ -144,3 +144,79 @@ def test_render_component_passes_everything_to_var_keyword():
     assert render_component(component, context={"b": 1, "a": 2}) == (
         "<p>[&#x27;a&#x27;, &#x27;b&#x27;]</p>"
     )
+
+
+def test_fragment_component_and_response():
+    from django_div import Fragment
+
+    assert render_to_string("tests.components.siblings") == "<h1>Title</h1><p>Body</p>"
+    assert as_response(Fragment(P("a"), P("b"))).content == b"<p>a</p><p>b</p>"
+    assert isinstance(Fragment(P("a")).render(), SafeString)
+
+
+def test_function_signature_is_reused(monkeypatch):
+    import inspect
+
+    from django_div.django import _function_parameters
+
+    calls = []
+    original = inspect.signature
+
+    def signature(component):
+        calls.append(component)
+        return original(component)
+
+    def component(*, title="default"):
+        return P(title)
+
+    _function_parameters.cache_clear()
+    monkeypatch.setattr(inspect, "signature", signature)
+    assert render_component(component, context={"title": "a", "extra": 1}) == "<p>a</p>"
+    assert render_component(component, context={"title": "b"}) == "<p>b</p>"
+    assert render_component(component, context={}) == "<p>default</p>"
+    assert calls == [component]
+
+
+def test_unhashable_callable_uses_current_signature():
+    import inspect
+
+    class Component:
+        __hash__ = None
+        __signature__ = inspect.Signature(
+            [inspect.Parameter("first", inspect.Parameter.KEYWORD_ONLY)]
+        )
+
+        def __call__(self, **kwargs):
+            return P(",".join(kwargs))
+
+    component = Component()
+    context = {"first": 1, "second": 2}
+    assert render_component(component, context=context) == "<p>first</p>"
+    component.__signature__ = inspect.Signature(
+        [inspect.Parameter("second", inspect.Parameter.KEYWORD_ONLY)]
+    )
+    assert render_component(component, context=context) == "<p>second</p>"
+
+
+def test_component_filters_variadic_and_positional_only_names():
+    def component(title="default", /, *args, name="world"):
+        return P(f"{title}:{name}")
+
+    assert (
+        render_component(
+            component, context={"title": "ignored", "args": [], "name": "Jeff"}
+        )
+        == "<p>default:Jeff</p>"
+    )
+
+
+def test_component_without_inspectable_signature():
+    class Component:
+        @property
+        def __signature__(self):
+            raise ValueError("unavailable")
+
+        def __call__(self, **kwargs):
+            return P(kwargs["title"])
+
+    assert render_component(Component(), context={"title": "hi"}) == "<p>hi</p>"

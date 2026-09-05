@@ -26,10 +26,12 @@ from typing import Any
 from django_div import (
     Comment,
     Doctype,
+    Fragment,
     HtmlItem,
     Raw,
     Tag,
     Text,
+    _unwrap_fragments,
 )
 
 __all__ = [
@@ -155,6 +157,8 @@ def to_markdown(item: HtmlItem | list[HtmlItem]) -> str:
 
 def _block(item: HtmlItem) -> str:
     """Render one block-level item; "" means it contributes nothing."""
+    if isinstance(item, Fragment):
+        return to_markdown(item.children)
     if isinstance(item, Doctype):
         return ""  # a doctype has no meaning in a Markdown document
     if isinstance(item, Text):
@@ -208,7 +212,7 @@ def _definition_list(tag: Tag) -> str:
     groups it is a blank line.
     """
     groups: list[list[str]] = []
-    for child in tag.children:
+    for child in _unwrap_fragments(tag.children):
         if not isinstance(child, Tag):
             continue
         if child.tag == "dt":
@@ -224,12 +228,15 @@ def _fence(pre: Tag) -> str:
     """A <pre> as a fenced code block, language taken from class=language-*."""
     language = ""
     source: Tag = pre
-    child = next((c for c in pre.children if isinstance(c, Tag)), None)
+    child = next(
+        (c for c in _unwrap_fragments(pre.children) if isinstance(c, Tag)), None
+    )
     if child is not None and child.tag == "code":
         source = child
     for candidate in (source, pre, child):
-        classes = str((candidate.attrs if candidate else {}).get("class", ""))
-        for token in classes.split():
+        if candidate is None:
+            continue
+        for token in candidate.classes:
             if token.startswith("language-"):
                 language = token.removeprefix("language-")
                 break
@@ -245,6 +252,8 @@ def _fence(pre: Tag) -> str:
 
 def _inline(item: HtmlItem) -> str:
     """Render one item in inline context."""
+    if isinstance(item, Fragment):
+        return "".join(_inline(child) for child in item.children)
     if isinstance(item, Text):
         return item.content
     if isinstance(item, Raw):
@@ -299,16 +308,17 @@ def _list(tag: Tag, *, indent: int = 0) -> str:
     number = int(tag.attrs.get("start", 1))
     pad = " " * indent
     lines = []
-    for child in tag.children:
+    for child in _unwrap_fragments(tag.children):
         if not (isinstance(child, Tag) and child.tag == "li"):
             continue
         marker = f"{number}. " if ordered else "- "
-        nested = [
-            grandchild
-            for grandchild in child.children
-            if isinstance(grandchild, Tag) and grandchild.tag in ("ul", "ol")
-        ]
-        own = [grandchild for grandchild in child.children if grandchild not in nested]
+        own: list[HtmlItem] = []
+        nested: list[Tag] = []
+        for grandchild in _unwrap_fragments(child.children):
+            if isinstance(grandchild, Tag) and grandchild.tag in ("ul", "ol"):
+                nested.append(grandchild)
+            else:
+                own.append(grandchild)
         parts: list[str] = []
         for grandchild in own:
             if isinstance(grandchild, Tag) and (
@@ -401,7 +411,7 @@ def _table_alignment(cell: Tag) -> str:
 def _table_cell(cell: Tag) -> str:
     """One cell as a single line: hard breaks become <br>, pipes escaped."""
     parts = []
-    for child in cell.children:
+    for child in _unwrap_fragments(cell.children):
         if isinstance(child, Tag) and child.tag == "br":
             parts.append("<br>")
         elif isinstance(child, Tag) and (
@@ -420,7 +430,7 @@ def _table_cell(cell: Tag) -> str:
 def _table_cells(row: Tag) -> list[Tag]:
     return [
         cell
-        for cell in row.children
+        for cell in _unwrap_fragments(row.children)
         if isinstance(cell, Tag) and cell.tag in ("td", "th")
     ]
 
@@ -437,7 +447,7 @@ def _table_parts(
     head_rows: list[Tag] = []
     body_rows: list[Tag] = []
     foot_rows: list[Tag] = []
-    for child in tag.children:
+    for child in _unwrap_fragments(tag.children):
         if not isinstance(child, Tag):
             continue
         if child.tag == "caption":
@@ -447,7 +457,7 @@ def _table_parts(
         elif child.tag in ("thead", "tbody", "tfoot"):
             rows = [
                 row
-                for row in child.children
+                for row in _unwrap_fragments(child.children)
                 if isinstance(row, Tag) and row.tag == "tr"
             ]
             if child.tag == "thead":

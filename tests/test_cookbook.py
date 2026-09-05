@@ -317,21 +317,10 @@ def test_keep_only_strips_elements_and_attributes():
     assert render(keep_only(dirty)) == "<p>ok <b>b</b></p>"
 
 
-def readable_text(tree, separator=" "):
-    """Text with a separator between blocks, unlike .text which concatenates."""
-    return separator.join(
-        part
-        for part in (
-            item.content.strip() for item in tree.walk() if isinstance(item, Text)
-        )
-        if part
-    )
-
-
 def test_readable_text():
     tree = from_html("<article><h1>Title</h1><p>one two</p></article>")
     assert tree.text == "Titleone two", "walk order, no separators"
-    assert readable_text(tree) == "Title one two"
+    assert tree.get_text(" ", strip=True) == "Title one two"
 
 
 def pretty(item, indent=0):

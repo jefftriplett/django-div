@@ -1,6 +1,6 @@
 """Components used by the Django backend tests."""
 
-from django_div import H1, Div, P, Span
+from django_div import H1, Div, Fragment, P, Span
 
 
 def home(title, **context):
@@ -21,3 +21,7 @@ def returns_a_string():
 
 
 not_callable = "I am not a component"
+
+
+def siblings():
+    return Fragment(H1("Title"), P("Body"))

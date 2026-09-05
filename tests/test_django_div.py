@@ -531,3 +531,62 @@ def test_version_matches_pyproject():
     pyproject = pathlib.Path(__file__).parent.parent / "pyproject.toml"
     project = tomllib.loads(pyproject.read_text())["project"]
     assert project["version"] == django_div.__version__
+
+
+@pytest.mark.parametrize("factory", [Input, Br, Img])
+def test_call_refuses_void_children_without_changing_original(factory):
+    original = factory()
+    with pytest.raises(ValueError, match="void element"):
+        original([None, (child for child in ["lost"])])
+    assert original.children == []
+    assert original(None, False, []).children == []
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "card active",
+        ["card", "active"],
+        ("card", "active"),
+        {"card": True, "active": True, "off": False},
+    ],
+)
+def test_class_tokens_match_rendered_classes(value):
+    element = Div(class_=value)
+    assert element.classes == ["card", "active"]
+    assert element.has_class("card")
+    assert not element.has_class("car")
+    assert not element.has_class("card active")
+    assert not element.has_class("off")
+    assert element.classes == from_html(str(element)).classes
+
+
+@pytest.mark.parametrize("value", [None, False, True, "", [], {}])
+def test_missing_or_empty_class_tokens(value):
+    assert Div(class_=value).classes == []
+    assert not Div(class_=value).has_class("")
+
+
+def test_class_helpers_follow_attribute_edits_and_keep_exact_search():
+    child = P(class_="card active")
+    parent = Div(child)
+    assert parent.find(class_="card") is None
+    assert parent.find(class_="card active") is child
+    child.attrs["class"] = {"changed": True}
+    assert child.has_class("changed")
+    assert not child.has_class("card")
+
+
+def test_get_text_options_preserve_existing_text_behavior():
+    tree = Div(
+        "  Title ",
+        P(" Body ", Span(" inline ")),
+        "   ",
+        Comment(content="omit"),
+        Raw(content="<b>omit</b>"),
+    )
+    assert tree.get_text() == tree.text == "  Title  Body  inline    "
+    assert tree.get_text("|", strip=True) == "Title|Body|inline"
+    assert tree.get_text(strip=True) == "TitleBodyinline"
+    assert tree.get_text("|") == "  Title | Body | inline |   "
+    assert Div().get_text(" ", strip=True) == ""

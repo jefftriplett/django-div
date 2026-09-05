@@ -163,3 +163,20 @@ arguments instead.
 
 If you want template inheritance, keep those pages in Django templates and
 use django-div for the parts that benefit from being Python.
+
+
+## Components returning siblings
+
+Return a `Fragment` to render siblings without an extra wrapper:
+
+```python
+from django_div import Fragment, H1, P
+
+
+def content(title):
+    return Fragment(H1(title), P("Body"))
+```
+
+It works with the template backend and `as_response()` just like a tag.
+The backend caches signature metadata for ordinary functions, up to 256
+entries. It still calls the component and builds its output for each render.

@@ -369,19 +369,14 @@ tree = from_html("<article><h1>Title</h1><p>one two</p></article>")
 tree.text          # 'Titleone two'
 ```
 
-When you want something readable (search indexing, summaries), join the
-pieces yourself:
+For search indexing or summaries, join trimmed text nodes:
 
 ```python
-def readable_text(tree, separator=" "):
-    return separator.join(
-        part for part in (
-            item.content.strip() for item in tree.walk() if isinstance(item, Text)
-        ) if part
-    )
-
-readable_text(tree)   # 'Title one two'
+tree.get_text(" ", strip=True)   # 'Title one two'
 ```
+
+The separator goes between every text node, including inline elements;
+choose it for the output you need. `.text` keeps its original behavior.
 
 ### Pretty-print a tree
 

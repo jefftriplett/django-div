@@ -65,6 +65,17 @@ card = Div(class_="card")
 card(H1("Title"), P("Body"))
 ```
 
+`Fragment` groups siblings without adding an HTML element. It supports the
+same rendering, search, text extraction, and JSON round trips as a tag:
+
+```python
+from django_div import Fragment, H1, P
+
+content = Fragment(H1("Title"), P("Body"))
+print(content)  # <h1>Title</h1><p>Body</p>
+content.get_text(" ", strip=True)  # 'Title Body'
+```
+
 `Tag` handles anything that isn't pre-generated, including custom elements:
 
 ```python
@@ -83,12 +94,17 @@ page.text                          # all text in the subtree
 page.find("a", class_="external")  # first match, or None
 page.find_all("a")                 # every descendant match
 page.walk()                        # every node, depth first
+page.get_text(" ", strip=True)      # text nodes joined with spaces
 
 for link in page.find_all("a", target="_blank"):
     link.attrs["rel"] = "noopener"
 
 print(page)
 ```
+
+Use `tag.has_class("external")` to test a class token in a multi-class
+attribute. `tag.classes` returns tokens for string, list, and mapping values;
+`find(class_="external")` continues to compare the entire attribute.
 
 `parse()` is the underlying function and always returns a list;
 `from_html()` unwraps the single-root case.
