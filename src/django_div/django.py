@@ -137,12 +137,13 @@ class Template:
         self.origin = getattr(component, "__module__", "django_div")
 
     def render(self, context: dict[str, Any] | None = None, request: Any = None) -> str:
-        context = dict(context or {})
+        merged = {}
         if request is not None:
-            context.setdefault("request", request)
+            merged["request"] = request
             for processor in self.backend.context_processors:
-                context.update(processor(request))
-        return mark_safe(render_component(self.component, context=context))
+                merged.update(processor(request))
+        merged.update(context or {})
+        return mark_safe(render_component(self.component, context=merged))
 
 
 class DjangoDivTemplates(BaseEngine):

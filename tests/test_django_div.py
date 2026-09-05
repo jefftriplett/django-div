@@ -590,3 +590,31 @@ def test_get_text_options_preserve_existing_text_behavior():
     assert tree.get_text(strip=True) == "TitleBodyinline"
     assert tree.get_text("|") == "  Title | Body | inline |   "
     assert Div().get_text(" ", strip=True) == ""
+
+
+@pytest.mark.parametrize("first", ["classes", "has_class", "render"])
+@pytest.mark.parametrize("assign", [False, True])
+def test_iterator_classes_remain_available(first, assign):
+    values = (name for name in ["card", None, "active"])
+    element = Div() if assign else Div(class_=values)
+    if assign:
+        element.attrs["class"] = values
+    if first == "classes":
+        assert element.classes == ["card", "active"]
+    elif first == "has_class":
+        assert element.has_class("card")
+    else:
+        assert str(element) == '<div class="card active"></div>'
+    for _ in range(2):
+        assert element.classes == ["card", "active"]
+        assert element.has_class("active")
+        assert str(element) == '<div class="card active"></div>'
+
+
+def test_iterator_classes_survive_copy_and_json_round_trip():
+    original = Div(class_=iter(["card", "active"]))
+    clone = original("child")
+    assert clone.has_class("card")
+    assert original.classes == ["card", "active"]
+    restored = Tag.model_validate_json(original.model_dump_json())
+    assert restored.classes == original.classes

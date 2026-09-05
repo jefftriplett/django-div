@@ -27,7 +27,7 @@ from functools import cache
 from html import escape
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, BeforeValidator, Field, SerializeAsAny
+from pydantic import BaseModel, BeforeValidator, Field, SerializeAsAny, field_validator
 
 __all__ = [
     "ATTR_NAME_RE",
@@ -442,13 +442,25 @@ def render_attrs(attrs: dict[str, Any]) -> str:
             parts.append(name)
             continue
         if name in ("class", "style"):
-            value = render_class(value) if name == "class" else render_style(value)
+            value = (
+                render_class(_class_value(attrs, raw_name))
+                if name == "class"
+                else render_style(value)
+            )
             # An all-false mapping means "no classes", so drop the attribute
             # rather than emitting class="", the way False drops one outright.
             if not value:
                 continue
         parts.append(f'{name}="{escape(str(value), quote=True)}"')
     return f" {' '.join(parts)}" if parts else ""
+
+
+def _class_value(attrs: dict[str, Any], name: str = "class") -> Any:
+    """Retain one-shot class iterators for subsequent reads and renders."""
+    value = attrs.get(name)
+    if isinstance(value, Iterator):
+        value = attrs[name] = list(value)
+    return value
 
 
 def render_class(value: Any) -> str:
@@ -679,14 +691,20 @@ class _Container(HtmlItem):
         # level. Entries are either items to render or already-final strings
         # (closing tags).
         parts: list[str] = []
+        # The root is already inside its base renderer (possibly via super()).
+        # Only descendants need dispatch to custom __str__ implementations.
         stack: list[Any] = [self]
         while stack:
             node = stack.pop()
             if isinstance(node, str):
                 parts.append(node)
-            elif isinstance(node, Fragment) and type(node).__str__ is Fragment.__str__:
+            elif isinstance(node, Fragment) and (
+                node is self or type(node).__str__ is Fragment.__str__
+            ):
                 stack.extend(reversed(node.children))
-            elif isinstance(node, Tag) and type(node).__str__ is Tag.__str__:
+            elif isinstance(node, Tag) and (
+                node is self or type(node).__str__ is Tag.__str__
+            ):
                 attrs = render_attrs(node.attrs)
                 if node.is_void:
                     parts.append(f"<{node.tag}{attrs} />")
@@ -784,10 +802,19 @@ class Tag(_Container):
             attrs={normalize_attr(key): value for key, value in attrs.items()},
         )
 
+    @field_validator("attrs")
+    @classmethod
+    def _retain_class_iterators(cls, attrs: dict[str, Any]) -> dict[str, Any]:
+        # Retain values before shallow copies or serialization can consume them.
+        for name in attrs:
+            if normalize_attr(name) == "class":
+                _class_value(attrs, name)
+        return attrs
+
     @property
     def classes(self) -> list[str]:
         """Class tokens in rendering order, from a string, iterable, or mapping."""
-        value = self.attrs.get("class")
+        value = _class_value(self.attrs)
         if value is None or isinstance(value, bool):
             return []
         return render_class(value).split()

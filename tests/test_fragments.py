@@ -137,3 +137,17 @@ def test_fragments_in_markdown_structures_match_unwrapped_trees():
         )
     )
     assert to_markdown(table) == "| Title |\n| --- |\n| a<br>b |"
+
+
+@pytest.mark.parametrize("base", [Div, Fragment])
+def test_custom_renderer_can_delegate_to_super(base):
+    class Wrapped(base):
+        def __str__(self):
+            return "<main>" + super().__str__() + "</main>"
+
+    child = Wrapped("<&")
+    inner = "<div>&lt;&amp;</div>" if base is Div else "&lt;&amp;"
+    expected = f"<main>{inner}</main>"
+    assert str(child) == expected
+    assert str(Div(child)) == f"<div>{expected}</div>"
+    assert str(Fragment(child)) == expected

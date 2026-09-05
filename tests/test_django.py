@@ -220,3 +220,30 @@ def test_component_without_inspectable_signature():
             return P(kwargs["title"])
 
     assert render_component(Component(), context={"title": "hi"}) == "<p>hi</p>"
+
+
+def test_explicit_context_overrides_processors(request_):
+    from types import SimpleNamespace
+
+    from django_div.django import Template
+
+    seen = {}
+
+    def component(**context):
+        seen.update(context)
+        return Div(context["title"])
+
+    backend = SimpleNamespace(
+        context_processors=[
+            lambda request: {"title": "first", "extra": "first"},
+            lambda request: {"title": "second", "extra": "second"},
+        ]
+    )
+    template = Template(component, backend)
+    context = {"title": "view", "request": "explicit request"}
+    assert template.render(context, request_) == "<div>view</div>"
+    assert seen == {**context, "extra": "second"}
+    assert context == {"title": "view", "request": "explicit request"}
+    seen.clear()
+    assert template.render({}, request_) == "<div>second</div>"
+    assert seen["request"] is request_

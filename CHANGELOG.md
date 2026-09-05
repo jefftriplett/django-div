@@ -5,6 +5,20 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+## 2026.9.2 - 2026-09-05
+
+### Fixed
+
+- Custom tag and fragment renderers can call `super().__str__()` without
+  infinite recursion, including when nested inside other containers.
+  ([#11](https://github.com/jefftriplett/django-div/issues/11))
+- Iterator-valued class attributes remain available across class helpers,
+  repeated rendering, and copies; constructor values also serialize as lists.
+  ([#12](https://github.com/jefftriplett/django-div/issues/12))
+- Explicit template context takes precedence over context processors, while
+  later processors still override earlier ones.
+  ([#13](https://github.com/jefftriplett/django-div/issues/13))
+
 ## 2026.9.1 - 2026-09-05
 
 ### Added
