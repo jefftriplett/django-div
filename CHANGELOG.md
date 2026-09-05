@@ -5,6 +5,8 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+## 2026.9.1 - 2026-09-05
+
 ### Added
 
 - `Fragment(*items)` groups siblings without a wrapping element, with shared
