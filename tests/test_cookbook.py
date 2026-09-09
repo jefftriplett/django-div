@@ -598,3 +598,18 @@ def test_disclosure(expanded):
         f'aria-expanded="{state}">Details</button>'
         f'<div id="details"{hidden}>More information</div>'
     )
+
+
+def test_find_links_by_class_token():
+    page = from_html(
+        '<div><a class="external featured" target="_blank" href="/one">One</a>'
+        '<a class="external" href="/two">Two</a></div>'
+    )
+    links = page.find_all(
+        lambda node: node.tag == "a" and node.has_class("external"),
+        target="_blank",
+    )
+    assert [link.attrs["href"] for link in links] == ["/one"]
+    assert [link.attrs["href"] for link in page.find_all("a", class_="external")] == [
+        "/two"
+    ]

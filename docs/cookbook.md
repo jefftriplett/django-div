@@ -387,6 +387,31 @@ page = from_html(markup)
 [("A", "/a"), ("B", "/b")]
 ```
 
+### Find links by class token
+
+Pass a predicate when a class can appear alongside other classes. Keyword
+attributes narrow the results using their existing exact-match behavior:
+
+```python
+from django_div import from_html
+
+page = from_html(
+    '<div><a class="external featured" target="_blank" href="/one">One</a>'
+    '<a class="external" href="/two">Two</a></div>'
+)
+links = page.find_all(
+    lambda node: node.tag == "a" and node.has_class("external"),
+    target="_blank",
+)
+[link.attrs["href"] for link in links]
+# ['/one']
+```
+
+`find()` takes the same predicate and stops at the first match;
+`iter_find()` yields matches lazily. All three search descendant tags in
+document order, excluding the root. To compare a complete class attribute
+instead, continue using `find_all("a", class_="external")`.
+
 ### Make relative URLs absolute
 
 ```python

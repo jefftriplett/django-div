@@ -228,6 +228,29 @@ rather than one element per character.
 
 ## Install
 
+Install into a virtual environment with uv:
+
+```console
+uv venv                     # create an environment if needed
+uv pip install django-div
+```
+
+Or, with pip in your active virtual environment:
+
+```console
+python -m pip install django-div
+```
+
+Optional extras enable parsing and Markdown support. Use either installer:
+
+```console
+uv pip install 'django-div[parse]'
+python -m pip install 'django-div[parse]'
+```
+
+For a project managed by uv, use `uv add` to record the dependency in
+`pyproject.toml`:
+
 ```console
 uv add django-div            # building only
 uv add 'django-div[parse]'   # plus from_html()/parse(), via bs4 + lxml

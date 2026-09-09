@@ -14,7 +14,8 @@ Or parse one back out of markup, and get the same kind of tree::
 
 Text children are escaped. Void tags self-close. Attribute names are
 normalized (``class_`` -> ``class``, ``data_id`` -> ``data-id``), ``True``
-renders bare, and ``False``/``None`` drop the attribute entirely.
+renders bare, and ``False``/``None`` drop the attribute entirely, except
+ARIA booleans render explicit "true"/"false" values.
 """
 
 from __future__ import annotations

@@ -141,7 +141,7 @@ with `Tag`: text is escaped, collections flatten, and `None`/`False` drop out.
 Fragments can contain tags and other fragments, or appear inside a tag.
 
 The fields are `type="fragment"` and `children`. A fragment supports `render`,
-`walk`, `find`, `find_all`, `iter_find`, `.text`, `get_text`, and calling it to
+`walk`, `find`, `find_all`, `iter_find`, `transform`, `.text`, `get_text`, and calling it to
 create a shallow copy with additional children. `walk()` includes fragment
 nodes; searches return descendant tags. Copies have independent child lists
 but share existing child objects, just like tags.

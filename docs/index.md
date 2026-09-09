@@ -50,6 +50,22 @@ Pydantic model, which means the same objects can go in three directions:
 
 ## Install
 
+With uv, create a virtual environment if needed and install the package:
+
+```console
+uv venv
+uv pip install django-div
+```
+
+With pip, install into your active virtual environment:
+
+```console
+python -m pip install django-div
+```
+
+For uv-managed projects, `uv add` records the dependency in `pyproject.toml`.
+The same extras below also work with `uv pip install` and `python -m pip install`:
+
 ```console
 uv add django-div            # building only
 uv add 'django-div[parse]'   # plus from_html()/parse(), via bs4 + lxml
@@ -122,6 +138,19 @@ https://django-div.readthedocs.io/en/latest/django.md
 - [API reference](reference.md): every function, class, and constant
 - [Contributing](contributing.md): setup, conventions, tests
 
+## Reusable elements and browser data
+
+Derive element variants with `with_attrs()`, render explicit ARIA states
+from Python booleans, and pass browser data with `JsonScript`.
+The [cookbook](cookbook.md) includes button variants, disclosures,
+HTML templates, and JSON data recipes.
+
+Search by class tokens or custom conditions with predicates, and use
+`transform()` to replace, remove, or unwrap nodes on a copied tree.
+See [searching](parsing.md#searching) and
+[transforming a copy](parsing.md#transforming-a-copy) for traversal and
+copy semantics.
+
 ## Where it came from
 
 django-div started as five throwaway scripts trying to answer one question:
@@ -136,10 +165,3 @@ fields? Those experiments are still in the git history at the
 cover adjacent ground, and htpy in particular landed on a very similar
 constructor shape. django-div's angle is the Pydantic model underneath: the
 same objects parse, validate, and serialize.
-
-## Reusable elements and browser data
-
-Derive element variants with `with_attrs()`, render explicit ARIA states
-from Python booleans, and pass browser data with `JsonScript`.
-The [cookbook](cookbook.md) includes button variants, disclosures,
-HTML templates, and JSON data recipes.

@@ -7,7 +7,7 @@ Register the backend alongside your usual template engines::
         {"BACKEND": "django.template.backends.django.DjangoTemplates", ...},
     ]
 
-Then a component is any callable returning an HtmlItem, addressed by its
+Then a component is a callable, usually returning an HtmlItem, addressed by its
 dotted path, and ordinary Django views render it::
 
     # myapp/components.py
@@ -110,7 +110,8 @@ def render_component(component: Component, *, context: dict[str, Any]) -> str:
     A component declaring ``**kwargs`` receives the whole context; one that
     names its parameters receives only those, so Django's context
     processors can add ``user``, ``perms``, and friends without breaking
-    every component signature.
+    every component signature. Plain returns are escaped; HtmlItem results
+    and objects implementing __html__ retain their trusted markup.
     """
     # Cache ordinary functions only: callable instances can be unhashable or
     # expose a signature that changes with their state.
