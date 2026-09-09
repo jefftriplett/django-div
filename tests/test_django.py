@@ -247,3 +247,30 @@ def test_explicit_context_overrides_processors(request_):
     seen.clear()
     assert template.render({}, request_) == "<div>second</div>"
     assert seen["request"] is request_
+
+
+@pytest.mark.parametrize("backend", [False, True])
+def test_component_return_escaping(backend):
+    from django_div import Raw
+
+    class SafeMarkup:
+        def __html__(self):
+            return "<b>trusted</b>"
+
+    cases = [
+        ("<b>untrusted & text</b>", "&lt;b&gt;untrusted &amp; text&lt;/b&gt;"),
+        (mark_safe("<b>trusted</b>"), "<b>trusted</b>"),
+        (SafeMarkup(), "<b>trusted</b>"),
+        (Raw(content="<b>trusted</b>"), "<b>trusted</b>"),
+        (P("<unsafe>"), "<p>&lt;unsafe&gt;</p>"),
+        (gettext_lazy("<lazy>"), "&lt;lazy&gt;"),
+    ]
+    for content, expected in cases:
+        if backend:
+            rendered = render_to_string(
+                "tests.components.returns_content", {"content": content}
+            )
+            assert isinstance(rendered, SafeString)
+        else:
+            rendered = render_component(lambda: content, context={})
+        assert rendered == expected

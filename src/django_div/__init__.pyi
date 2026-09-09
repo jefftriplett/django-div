@@ -96,6 +96,7 @@ class Tag(_Container):
     def model_validate_json(cls, json_data: str | bytes, **kwargs: Any) -> Tag: ...
     def render_raw_text(self) -> str: ...
     def __call__(self, *children: Any) -> Tag: ...
+    def with_attrs(self, /, **attrs: Any) -> Tag: ...
 
 class Text(HtmlItem):
     type: Literal["text"]
@@ -506,6 +507,9 @@ class Xmp(Tag):
 class JsonLd(Script):
     def __init__(self, data: Any = None, **attrs: Any) -> None: ...
 
+class JsonScript(Script):
+    def __init__(self, data: Any = None, **attrs: Any) -> None: ...
+
 __all__ = [
     "A",
     "ATTR_NAME_RE",
@@ -584,6 +588,7 @@ __all__ = [
     "Ins",
     "JSON_LD_ESCAPES",
     "JsonLd",
+    "JsonScript",
     "Kbd",
     "Label",
     "Legend",

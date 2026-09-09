@@ -118,6 +118,7 @@ class Tag(_Container):
     def model_validate_json(cls, json_data: str | bytes, **kwargs: Any) -> Tag: ...
     def render_raw_text(self) -> str: ...
     def __call__(self, *children: Any) -> Tag: ...
+    def with_attrs(self, /, **attrs: Any) -> Tag: ...
 
 class Text(HtmlItem):
     type: Literal["text"]
@@ -145,6 +146,8 @@ def build_stub() -> str:
     # the loop above has emitted Script.
     lines.append(
         "\nclass JsonLd(Script):\n"
+        "    def __init__(self, data: Any = None, **attrs: Any) -> None: ...\n"
+        "\nclass JsonScript(Script):\n"
         "    def __init__(self, data: Any = None, **attrs: Any) -> None: ...\n"
     )
     names = ",\n".join(f'    "{name}"' for name in sorted(django_div.__all__))

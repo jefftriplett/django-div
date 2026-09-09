@@ -297,3 +297,21 @@ def test_the_lists_are_not_empty():
     """A snapshot that failed to generate would make every test above vacuous."""
     assert len(GLOBAL_ATTRIBUTES) > 20
     assert len(INPUT_TYPES) > 20
+
+
+@pytest.mark.parametrize("name", ["aria_expanded", "aria-expanded", "aria_pressed"])
+@pytest.mark.parametrize(
+    "value, expected", [(True, "true"), (False, "false"), ("mixed", "mixed")]
+)
+def test_aria_values(name, value, expected):
+    item = Div(**{name: value})
+    attribute = normalize_attr(name)
+    assert str(item) == f'<div {attribute}="{expected}"></div>'
+    assert from_html(str(item)).attrs[attribute] == expected
+
+
+def test_aria_none_and_html_booleans():
+    assert (
+        str(Input(aria_hidden=None, disabled=True, checked=False))
+        == "<input disabled />"
+    )

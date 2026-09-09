@@ -618,3 +618,70 @@ def test_iterator_classes_survive_copy_and_json_round_trip():
     assert original.classes == ["card", "active"]
     restored = Tag.model_validate_json(original.model_dump_json())
     assert restored.classes == original.classes
+
+
+# --- attribute variants ----------------------------------------------------
+
+
+def test_with_attrs_replaces_and_normalizes_without_changing_original():
+    original = Div("Save", class_="btn", title="Save changes", data_id="old")
+    variant = original.with_attrs(
+        class_="btn primary", title=None, data_id="new", aria_expanded=False
+    )
+    assert str(variant) == (
+        '<div class="btn primary" data-id="new" aria-expanded="false">Save</div>'
+    )
+    assert str(original) == (
+        '<div class="btn" title="Save changes" data-id="old">Save</div>'
+    )
+    assert type(variant) is Div
+    assert variant.children[0] is original.children[0]
+    variant.attrs["id"] = "variant"
+    variant.children.append(P("Extra"))
+    assert "id" not in original.attrs
+    assert len(original.children) == 1
+
+
+def test_with_attrs_preserves_subclass_without_reconstructing():
+    class Card(Div):
+        def __init__(self, heading):
+            super().__init__(P(heading), class_="card")
+
+    original = Card("Hello")
+    variant = original.with_attrs(id="greeting")
+    assert type(variant) is Card
+    assert str(variant) == '<div class="card" id="greeting"><p>Hello</p></div>'
+    assert "id" not in original.attrs
+
+
+def test_with_attrs_is_shallow_even_with_no_updates():
+    original = Div(P("Hello"), style={"color": "red"})
+    variant = original.with_attrs()
+    assert variant is not original
+    assert variant.attrs is not original.attrs
+    assert variant.children is not original.children
+    assert variant.children[0] is original.children[0]
+    assert variant.attrs["style"] is original.attrs["style"]
+
+
+def test_with_attrs_retains_class_generators_for_render_and_serialization():
+    original = Div(class_="old")
+    variant = original.with_attrs(class_=(name for name in ["new", "active"]))
+    assert variant.classes == ["new", "active"]
+    assert str(variant) == str(variant) == '<div class="new active"></div>'
+    assert str(Tag.model_validate_json(variant.model_dump_json())) == str(variant)
+    assert original.classes == ["old"]
+
+
+def test_with_attrs_preserves_void_and_attribute_rendering_rules():
+    original = Input(disabled=True)
+    variant = original.with_attrs(disabled=False, title='<"value">')
+    assert str(variant) == '<input title="&lt;&quot;value&quot;&gt;" />'
+    assert str(original) == "<input disabled />"
+    with pytest.raises(ValueError, match="invalid attribute name"):
+        str(original.with_attrs(**{"bad name": "value"}))
+
+
+def test_with_attrs_all_keywords_are_attributes():
+    variant = Div().with_attrs(self="a", attrs="b", children="c", tag="d")
+    assert str(variant) == '<div self="a" attrs="b" children="c" tag="d"></div>'

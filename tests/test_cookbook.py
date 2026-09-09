@@ -26,6 +26,7 @@ from django_div import (
     Html,
     Input,
     JsonLd,
+    JsonScript,
     Label,
     Li,
     Meta,
@@ -33,7 +34,6 @@ from django_div import (
     Ol,
     P,
     Raw,
-    Script,
     Span,
     Table,
     Tag,
@@ -456,17 +456,11 @@ def test_add_a_class_to_a_widget():
     assert 'class="form-control"' in str(with_class(form["email"], "form-control"))
 
 
-def json_script(data, id):
-    """json.dumps can emit </script>; escaping < keeps it inside the element."""
-    return Script(
-        json.dumps(data).replace("<", "\\u003C"), id=id, type="application/json"
-    )
-
-
 def test_json_script_cannot_break_out():
-    rendered = str(json_script({"a": "</script>"}, "config"))
+    rendered = str(JsonScript({"a": "</script>"}, id="config"))
     assert rendered == (
-        '<script id="config" type="application/json">{"a": "\\u003C/script>"}</script>'
+        '<script type="application/json" id="config">'
+        '{"a":"\\u003c/script\\u003e"}</script>'
     )
     assert "</script><" not in rendered
 

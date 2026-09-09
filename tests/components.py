@@ -25,3 +25,7 @@ not_callable = "I am not a component"
 
 def siblings():
     return Fragment(H1("Title"), P("Body"))
+
+
+def returns_content(content):
+    return content

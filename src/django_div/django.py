@@ -31,6 +31,7 @@ from typing import Any
 from django.http import HttpResponse
 from django.template import TemplateDoesNotExist
 from django.template.backends.base import BaseEngine
+from django.utils.html import conditional_escape
 from django.utils.module_loading import import_string
 from django.utils.safestring import mark_safe
 
@@ -125,7 +126,9 @@ def render_component(component: Component, *, context: dict[str, Any]) -> str:
     )
 
     result = component(**accepted)
-    return result.render() if isinstance(result, HtmlItem) else str(result)
+    return (
+        result.render() if isinstance(result, HtmlItem) else conditional_escape(result)
+    )
 
 
 class Template:
