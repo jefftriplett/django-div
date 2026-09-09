@@ -39,6 +39,7 @@ from django_div import (
     Tag,
     Tbody,
     Td,
+    Template,
     Text,
     Th,
     Thead,
@@ -65,6 +66,25 @@ def test_component():
     assert str(card("Hello", P("Body"), href="/x")) == (
         '<div class="card"><h2><a href="/x">Hello</a></h2>'
         '<div class="card-body"><p>Body</p></div></div>'
+    )
+
+
+def test_html_template():
+    template = Template(
+        Div(Span("Hello"), class_="card"),
+        id="card-template",
+    )
+    raw_template = Template(
+        Raw(content='<div class="card"><span>Hello</span></div>'),
+        id="card-template",
+    )
+    expected = (
+        '<template id="card-template">'
+        '<div class="card"><span>Hello</span></div></template>'
+    )
+    assert str(template) == str(raw_template) == expected
+    assert str(Template("<b>{{ name }}</b>")) == (
+        "<template>&lt;b&gt;{{ name }}&lt;/b&gt;</template>"
     )
 
 

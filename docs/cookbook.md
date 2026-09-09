@@ -49,6 +49,48 @@ render(document("Home", H1("Hi")))
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><title>Home</title></head><body><h1>Hi</h1></body></html>
 ```
 
+### HTML templates for JavaScript
+
+Use `Template` to hold HTML that JavaScript can clone and insert later.
+Build its contents with elements as usual:
+
+```python
+from django_div import Div, Span, Template
+
+template = Template(
+    Div(Span("Hello"), class_="card"),
+    id="card-template",
+)
+```
+
+For an existing trusted HTML string, wrap the markup in `Raw`:
+
+```python
+from django_div import Raw, Template
+
+template = Template(
+    Raw(content='<div class="card"><span>Hello</span></div>'),
+    id="card-template",
+)
+```
+
+Both produce the same HTML when rendered with `str(template)`:
+
+```html
+<template id="card-template"><div class="card"><span>Hello</span></div></template>
+```
+
+Once the template is in the document, JavaScript can insert its contents:
+
+```javascript
+const template = document.querySelector("#card-template");
+document.body.append(template.content.cloneNode(true));
+```
+
+Ordinary string children are still escaped inside `Template`. Use `Raw`
+only for trusted markup, never untrusted user input. Placeholders such as
+`{{ name }}` remain literal; django-div does not evaluate them.
+
 ### A table from data
 
 ```python
