@@ -566,6 +566,41 @@ class HtmlItem(BaseModel):
         """Render to a string, marked safe when Django is installed."""
         return str(self)
 
+    def transform(
+        self, visitor: Callable[[HtmlItem], HtmlItem | None]
+    ) -> HtmlItem | None:
+        """Copy a tree and visit children before parents, including the root.
+
+        Return a node to keep/replace it, None to remove it, or a Fragment
+        for multiple siblings. Replacements are not visited again. Each
+        original occurrence is copied; nested attribute values remain shared.
+        """
+        stack: list[tuple[HtmlItem, bool]] = [(self, False)]
+        results: list[HtmlItem | None] = []
+        while stack:
+            node, ready = stack.pop()
+            if not ready:
+                clone = node.model_copy()
+                if isinstance(clone, Tag):
+                    clone.attrs = dict(clone.attrs)
+                if isinstance(clone, _Container):
+                    clone.children = list(clone.children)
+                    stack.append((clone, True))
+                    stack.extend((child, False) for child in reversed(clone.children))
+                    continue
+                node = clone
+            elif isinstance(node, _Container):
+                count = len(node.children)
+                if count:
+                    children = results[-count:]
+                    del results[-count:]
+                    node.children = [child for child in children if child is not None]
+            result = visitor(node)
+            if result is not None and not isinstance(result, HtmlItem):
+                raise TypeError("transform visitor must return an HtmlItem or None")
+            results.append(result)
+        return results[0]
+
 
 class Comment(HtmlItem):
     """An HTML comment.
@@ -648,14 +683,18 @@ class _Container(HtmlItem):
             parts = (text for part in parts if (text := part.strip()))
         return separator.join(parts)
 
-    def find(self, tag: str | None = None, **attrs: Any) -> Tag | None:
+    def find(
+        self, tag: str | Callable[[Tag], bool] | None = None, **attrs: Any
+    ) -> Tag | None:
         """The first descendant tag matching, or None.
 
         Stops at the first hit rather than walking the whole tree.
         """
         return next(self.iter_find(tag, **attrs), None)
 
-    def find_all(self, tag: str | None = None, **attrs: Any) -> list[Tag]:
+    def find_all(
+        self, tag: str | Callable[[Tag], bool] | None = None, **attrs: Any
+    ) -> list[Tag]:
         """Every descendant tag matching a name and/or attributes.
 
         Attribute names take the same Python spelling as the constructor::
@@ -664,15 +703,21 @@ class _Container(HtmlItem):
         """
         return list(self.iter_find(tag, **attrs))
 
-    def iter_find(self, tag: str | None = None, **attrs: Any) -> Iterator[Tag]:
-        """find_all() as a lazy iterator."""
+    def iter_find(
+        self, tag: str | Callable[[Tag], bool] | None = None, **attrs: Any
+    ) -> Iterator[Tag]:
+        """Find descendant tags by name or predicate, lazily in document order.
+
+        The root is excluded; fragments are traversed but not matched.
+        Keyword attributes retain exact equality and filter before predicates.
+        """
         wanted = {normalize_attr(key): value for key, value in attrs.items()}
         for item in self.walk():
             if (
                 isinstance(item, Tag)
                 and item is not self
-                and (tag is None or item.tag == tag)
                 and all(item.attrs.get(key) == value for key, value in wanted.items())
+                and (tag(item) if callable(tag) else tag is None or item.tag == tag)
             ):
                 yield item
 
