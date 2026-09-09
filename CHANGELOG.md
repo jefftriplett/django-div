@@ -5,6 +5,24 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+### Added
+
+- `Tag.with_attrs(**attrs)` returns a shallow copy with normalized attribute
+  replacements, independent attribute and child containers, and the original
+  subclass preserved. ([#17](https://github.com/jefftriplett/django-div/issues/17))
+- `JsonScript(data, **attrs)` embeds browser-readable JSON with script-safe
+  escaping, nested Pydantic model support, and null preservation. ([#16](https://github.com/jefftriplett/django-div/issues/16))
+
+### Fixed
+
+- Boolean `aria-*` attributes render explicit `"true"` / `"false"` values;
+  `None` still omits them. Other attributes retain their existing behavior.
+  ([#14](https://github.com/jefftriplett/django-div/issues/14))
+- Plain-string Django component returns are now escaped. Components that
+  intentionally return HTML strings must use `Raw` or explicitly trusted
+  markup; element and `__html__` results remain supported.
+  ([#15](https://github.com/jefftriplett/django-div/issues/15))
+
 ## 2026.9.2 - 2026-09-05
 
 ### Fixed

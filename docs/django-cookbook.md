@@ -225,32 +225,10 @@ breadcrumbs([("Home", "/"), ("Building", None)])
 
 ## Passing data to JavaScript
 
-`<script>` content is not escaped, and it can't be, or the code would break, so JSON has to be escaped for the *element*, not for HTML:
-
-```python
-import json
-
-def json_script(data, id):
-    return Script(json.dumps(data).replace("<", "\\u003C"),
-                  id=id, type="application/json")
-
-json_script({"a": "</script>"}, "config")
-```
-
-```html
-<script id="config" type="application/json">{"a": "\u003C/script>"}</script>
-```
-
-`\u003C` is a valid JSON escape for `<`, so `JSON.parse()` returns the
-original string while the literal `</script>` never appears in the document.
-
-!!! danger "Never interpolate untrusted data into a Script"
-
-    django-div refuses content containing the element's own closing tag, but
-    that is a backstop, not a sanitizer. Pass data as JSON like this, or as a
-    `data-` attribute, and read it from JavaScript. Django's own
-    [`json_script`](https://docs.djangoproject.com/en/stable/ref/templates/builtins/#json-script)
-    filter does the same job if you'd rather not hand-roll it.
+Use `JsonScript` inside a component to pass browser configuration safely.
+It supports nested Pydantic models and preserves `None` as JSON `null`.
+See the [complete recipe](cookbook.md#passing-data-to-javascript) for the
+Python, rendered HTML, and JavaScript reader. The helper works without Django.
 
 ## Email
 

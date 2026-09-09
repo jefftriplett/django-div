@@ -71,7 +71,7 @@ from django_div import Div, H1, Li, P, Span, Ul, from_html
 Div(H1("Title"), P("a < b"), class_="page")
 # <div class="page"><h1>Title</h1><p>a &lt; b</p></div>
 
-# Falsy children drop out, so inline conditionals work
+# None and False children drop out, so inline conditionals work
 Div("Hello", user and Span(user.name))
 
 # Collections flatten, so comprehensions splat in
@@ -136,3 +136,10 @@ fields? Those experiments are still in the git history at the
 cover adjacent ground, and htpy in particular landed on a very similar
 constructor shape. django-div's angle is the Pydantic model underneath: the
 same objects parse, validate, and serialize.
+
+## Reusable elements and browser data
+
+Derive element variants with `with_attrs()`, render explicit ARIA states
+from Python booleans, and pass browser data with `JsonScript`.
+The [cookbook](cookbook.md) includes button variants, disclosures,
+HTML templates, and JSON data recipes.

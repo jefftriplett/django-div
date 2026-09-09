@@ -108,6 +108,14 @@ Tag(name, *children, **attrs)
 `model_validate(obj)` / `model_validate_json(data)`
 :   Load a tree, restoring element classes by their `tag`.
 
+`with_attrs(**attrs)`
+:   A shallow copy with supplied attributes replaced, using the constructor's
+    attribute-name normalization. Classes are replaced, not merged. Unspecified
+    attributes remain. `None` omits an attribute on render; booleans follow the
+    usual rendering rules, including explicit values for ARIA attributes.
+    The attribute dictionary and child list are independent; existing child
+    objects and nested attribute values remain shared. The subclass is preserved.
+
 ### `Fragment`
 
 ```python
@@ -155,6 +163,26 @@ other terms, call `model_dump()` yourself and hand over the dict.
 Parsing or re-validating one gives back a plain `Script`, since a tag name
 maps to a single class and `script` is taken. It renders identically, and
 `json.loads(tag.text)` reads the data back.
+
+### `JsonScript`
+
+`JsonScript(data, **attrs)` creates a `Script` with
+`type="application/json"` for browser code to read with `JSON.parse()`.
+It accepts JSON values and nested Pydantic models, using model aliases and
+JSON-mode serialization. Unlike `JsonLd`, model fields with `None` are
+preserved as `null`. Non-finite numbers are rejected because they are not
+valid JSON.
+
+```python
+JsonScript({"theme": "dark", "selection": None}, id="page-config")
+```
+
+The same script-safe character escaping used by `JsonLd` prevents data
+from closing the element. Keyword arguments become attributes, including
+an optional override of `type`. Parsing or loading through `Tag` restores
+a plain `Script` with identical output.
+
+See the [JavaScript data recipe](cookbook.md#passing-data-to-javascript).
 
 ### `Text`
 

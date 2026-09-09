@@ -22,6 +22,7 @@ from django_div import (
     Div,
     Doctype,
     Form,
+    Fragment,
     Head,
     Html,
     Input,
@@ -560,3 +561,39 @@ def test_html_email():
     body = render(document("Receipt", P("Hi Ana"), lang="en"))
     assert body.startswith("<!DOCTYPE html>")
     assert "<p>Hi Ana</p>" in body
+
+
+# Attribute variants and initial disclosure state from the general cookbook.
+
+
+def test_button_variants():
+    base = Button("Save", class_="btn", type="submit")
+    primary = base.with_attrs(class_="btn primary", disabled=True)
+    assert str(primary) == (
+        '<button class="btn primary" type="submit" disabled>Save</button>'
+    )
+    assert str(base) == '<button class="btn" type="submit">Save</button>'
+
+
+def disclosure(content, *, expanded=False):
+    return Fragment(
+        Button(
+            "Details",
+            type="button",
+            aria_controls="details",
+            aria_expanded=expanded,
+        ),
+        Div(content, id="details", hidden=not expanded),
+    )
+
+
+@pytest.mark.parametrize("expanded", [False, True])
+def test_disclosure(expanded):
+    rendered = str(disclosure("More information", expanded=expanded))
+    state = "true" if expanded else "false"
+    hidden = "" if expanded else " hidden"
+    assert rendered == (
+        '<button type="button" aria-controls="details" '
+        f'aria-expanded="{state}">Details</button>'
+        f'<div id="details"{hidden}>More information</div>'
+    )

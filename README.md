@@ -30,6 +30,9 @@ Div(class_={"btn": True, "on": False})   # <div class="btn"></div>
 Div("<script>x</script>")                # <div>&lt;script&gt;x&lt;/script&gt;</div>
 ```
 
+ARIA booleans render explicit values: `aria_expanded=False` produces
+`aria-expanded="false"`. `None` omits the attribute.
+
 `style` takes a mapping too, and `<script>`/`<style>` content is left
 unescaped, since escaping it would change what the code means:
 
@@ -64,6 +67,20 @@ Call a tag to append children and get a copy back, leaving the original alone:
 card = Div(class_="card")
 card(H1("Title"), P("Body"))
 ```
+
+Use `with_attrs()` to copy an element with replacement attributes:
+
+```python
+primary = card.with_attrs(class_="card primary", data_id="featured")
+```
+
+The original stays unchanged. Classes are replaced as a whole; the copy
+shares existing child objects and nested attribute values.
+
+`JsonScript(data, id="config")` embeds JSON for JavaScript to read with
+`JSON.parse()`, with script-safe escaping and null preservation. See the
+[cookbook](https://django-div.readthedocs.io/en/latest/cookbook/#passing-data-to-javascript)
+for the browser code.
 
 `Fragment` groups siblings without adding an HTML element. It supports the
 same rendering, search, text extraction, and JSON round trips as a tag:
@@ -172,7 +189,9 @@ def home_view(request):
     return render(request, "myapp.components.home", {"title": "Hi"})
 ```
 
-A component is any callable returning an `HtmlItem`. It receives the context
+A component is a callable, usually returning an `HtmlItem`. Plain-string
+returns are escaped; intentional HTML strings require `Raw` or explicitly
+trusted markup. It receives the context
 as keyword arguments: the whole context if it declares `**kwargs`, otherwise
 only the parameters it names, so context processors can add `user` and friends
 without breaking every signature.

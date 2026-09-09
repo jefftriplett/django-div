@@ -1,7 +1,8 @@
 # Cookbook
 
-Practical recipes, none of them Django-specific. Every example here is
-executed by `tests/test_cookbook.py`, so what you see is what it produces.
+Practical recipes, none of them Django-specific. The Python recipes are covered by
+`tests/test_cookbook.py`; browser-side JavaScript illustrates how to use the
+rendered markup.
 
 For Django-specific recipes, see the [Django cookbook](django-cookbook.md).
 
@@ -26,6 +27,59 @@ card("Hello", P("Body"), href="/x")
 
 Taking `*body` and passing it through keeps the caller's syntax identical to
 a built-in element's.
+
+### Reusable button variants
+
+Use `with_attrs()` to derive variants from a configured element:
+
+```python
+from django_div import Button
+
+base = Button("Save", class_="btn", type="submit")
+primary = base.with_attrs(class_="btn primary", disabled=True)
+```
+
+```html
+<button class="btn primary" type="submit" disabled>Save</button>
+```
+
+`base` still has `class="btn"` and no `disabled` attribute. Classes are
+replaced as a whole, so include any base classes you want to keep. Pass
+`None` to omit an attribute on render. The attribute dictionary and child
+list are copied, while existing child objects and nested attribute values
+remain shared.
+
+### A disclosure with matching ARIA state
+
+Use the same Python flag to describe whether a panel is expanded and
+whether its content is hidden:
+
+```python
+from django_div import Button, Div, Fragment
+
+
+def disclosure(content, *, expanded=False):
+    return Fragment(
+        Button(
+            "Details", type="button", aria_controls="details",
+            aria_expanded=expanded,
+        ),
+        Div(content, id="details", hidden=not expanded),
+    )
+
+
+disclosure("More information")
+```
+
+```html
+<button type="button" aria-controls="details" aria-expanded="false">Details</button><div id="details" hidden>More information</div>
+```
+
+ARIA booleans render as explicit `"true"` or `"false"`; HTML booleans such
+as `hidden` render bare when true and disappear when false. This recipe
+sets the initial state. If JavaScript toggles the panel, update both
+`aria-expanded` and `hidden`. Give each panel a unique ID when rendering
+multiple disclosures.
 
 ### A whole document
 
@@ -157,6 +211,34 @@ MyWidget("hi", data_state="ready")
 produces that class too. That is the point, but it means the registry grows at
 runtime. `BUILTIN_TAGS` is the fixed set this library ships. For a one-off
 that shouldn't be registered, `Tag("my-widget", ...)` skips it.
+
+### Passing data to JavaScript
+
+Use `JsonScript` to pass data to JavaScript. It escapes characters that could
+close the script element while preserving the original JSON values:
+
+```python
+from django_div import JsonScript
+
+JsonScript({"a": "</script>"}, id="config")
+```
+
+```html
+<script type="application/json" id="config">{"a":"\u003c/script\u003e"}</script>
+```
+
+Read the data after the element is in the document:
+
+```javascript
+const config = JSON.parse(document.getElementById("config").textContent);
+```
+
+`JsonScript` accepts dictionaries, lists, and nested Pydantic models.
+Models use their field aliases and JSON-compatible values; `None` is
+preserved as JSON `null`. No Django dependency is required.
+
+Use this helper for data instead of interpolating values into executable
+`Script` content. Plain HTML escaping is unsuitable inside a script element.
 
 ### JSON-LD from a Pydantic model
 

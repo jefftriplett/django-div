@@ -34,6 +34,18 @@ Lazy objects resolve correctly, so translations work:
 Div(gettext_lazy("Hello"))      # <div>Hello</div>
 ```
 
+### Component return values
+
+Plain-string component results are escaped, just like text children.
+For example, returning `"<b>Hello</b>"` produces
+`&lt;b&gt;Hello&lt;/b&gt;`. Return elements for structured HTML, or use
+`Raw(content=trusted_html)` for intentional, trusted markup. Objects with
+`__html__`, including Django `SafeString`, retain their trusted status.
+
+This changes the previous behavior that treated all component string
+results as safe HTML. Existing components returning HTML strings should
+return elements or explicitly trusted markup instead.
+
 ## Components as templates
 
 `DjangoDivTemplates` is a template backend whose templates are Python
@@ -60,8 +72,9 @@ TEMPLATES = [
 ]
 ```
 
-A component is any callable returning an `HtmlItem`, addressed by its dotted
-path:
+A component is a callable, usually returning an `HtmlItem`, addressed by its
+dotted path. Plain-string results are escaped; explicitly trusted markup is
+preserved as described above:
 
 ```python title="myapp/components.py"
 from django_div import H1, Div, Li, P, Ul

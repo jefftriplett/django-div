@@ -70,7 +70,8 @@ checks them against every attribute name MDN tracks, for HTML and SVG both.
 
 ### Boolean attributes
 
-`True` renders the attribute bare. `False` and `None` drop it entirely, which
+For attributes other than `aria-*`, `True` renders the attribute bare.
+`False` and `None` drop it entirely, which
 means you can pass a flag straight through.
 
 ```python
@@ -80,6 +81,11 @@ Input(type="checkbox", checked=is_selected, disabled=False)
 ```html
 <input type="checkbox" checked />
 ```
+
+ARIA attributes use explicit string values: `aria_expanded=False` renders
+`aria-expanded="false"`, and `aria_pressed=True` renders
+`aria-pressed="true"`. `None` still omits the attribute. This applies to
+both Python spellings and literal `aria-*` keys.
 
 ### `class` and `style` take structures
 
@@ -154,6 +160,24 @@ card(H1("First"))     # <div class="card"><h1>First</h1></div>
 card(H1("Second"))    # <div class="card"><h1>Second</h1></div>
 card                  # <div class="card"></div>
 ```
+
+Use `with_attrs()` to derive a variant with replacement attributes:
+
+```python
+base = Button("Save", class_="btn", title="Save changes")
+primary = base.with_attrs(class_="btn primary", disabled=True, title=None)
+# <button class="btn primary" disabled>Save</button>
+```
+
+The original stays unchanged. Names normalize just as in constructors
+(`class_` → `class`, `data_id` → `data-id`). Supplied values replace existing
+ones, including the entire class value; unspecified attributes remain.
+`None` omits an attribute when rendered. `False` follows the normal boolean
+rules, so `aria_expanded=False` still renders `aria-expanded="false"`.
+
+The copy keeps its subclass and has an independent attribute dictionary and
+child list. Existing child objects and nested attribute values are shared,
+matching the shallow-copy behavior of calling a tag.
 
 ## Escaping
 
