@@ -5,6 +5,8 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+## 2026.9.3 - 2026-09-09
+
 ### Added
 
 - Search methods accept tag predicates while preserving exact attribute
