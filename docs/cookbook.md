@@ -441,34 +441,40 @@ def table_to_dicts(table):
 
 ### Keep only certain elements
 
+Transform a copy to remove unwanted nodes and unwrap other containers.
+Children are processed before parents; returning a fragment preserves
+already-filtered children without their original wrapper. The source remains
+unchanged. Import `Fragment`, `Tag`, `Text`, and `parse` from `django_div`.
+
 ```python
 KEEP = {"p", "b", "i", "em", "strong", "a", "ul", "ol", "li", "code", "br"}
 KEEP_ATTRS = {"a": {"href", "title"}}
 DROP_ENTIRELY = {"script", "style"}
 
+def keep_node(item):
+    if isinstance(item, (Text, Fragment)):
+        return item
+    if isinstance(item, Tag):
+        if item.tag in DROP_ENTIRELY:
+            return None
+        if item.tag not in KEEP:
+            return Fragment(item.children)
+        item.attrs = {
+            name: value for name, value in item.attrs.items()
+            if name in KEEP_ATTRS.get(item.tag, set())
+        }
+        return item
+    return None
+
+
 def keep_only(items):
-    kept = []
-    for item in items:
-        if isinstance(item, Text):
-            kept.append(item)
-        elif isinstance(item, Tag):
-            if item.tag in DROP_ENTIRELY:
-                continue
-            if item.tag not in KEEP:
-                kept.extend(keep_only(item.children))   # unwrap, keep content
-                continue
-            item.children = keep_only(item.children)
-            item.attrs = {
-                name: value for name, value in item.attrs.items()
-                if name in KEEP_ATTRS.get(item.tag, set())
-            }
-            kept.append(item)
-    return kept
+    return Fragment(items).transform(keep_node)
 ```
 
 ```python
-parse('<p onclick="evil()">ok <script>alert(1)</script><b>b</b></p>')
-# -> <p>ok <b>b</b></p>
+items = parse('<p onclick="evil()">ok <script>alert(1)</script><b>b</b></p>')
+str(keep_only(items))
+# <p>ok <b>b</b></p>
 ```
 
 !!! danger "This is not a sanitizer"

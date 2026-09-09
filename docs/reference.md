@@ -32,6 +32,15 @@ Tests enforce both halves across every element class, so this stays true.
 
 All item types inherit from `HtmlItem`.
 
+`transform(visitor)` is available on every item. It returns a copied tree,
+visiting children before parents, including the root. Return an `HtmlItem`
+to keep or replace a node, `None` to remove it, or `Fragment` for siblings.
+Replacements are not revisited. Removing the root returns `None`.
+Copies preserve subclasses and have independent attribute dictionaries and
+child lists; nested attribute values remain shared. Callback-provided
+replacements are used as-is. See [transformation semantics](parsing.md#transforming-a-copy).
+
+
 ### `Tag`
 
 An element: a name, children, and attributes.
@@ -82,10 +91,11 @@ Tag(name, *children, **attrs)
     and trusted `Raw` markup are excluded, as with `.text`.
 
 `find(tag=None, **attrs)`
-:   First matching descendant, or `None`.
+:   First matching descendant tag, or `None`. `tag` accepts a name or a
+    predicate receiving a tag. The root is excluded.
 
 `find_all(tag=None, **attrs)`
-:   Every matching descendant.
+:   Every matching descendant tag, accepting the same name or predicate.
 
 `iter_find(tag=None, **attrs)`
 :   `find_all()` as a lazy iterator; `find()` uses it to stop at the first
@@ -115,6 +125,10 @@ Tag(name, *children, **attrs)
     usual rendering rules, including explicit values for ARIA attributes.
     The attribute dictionary and child list are independent; existing child
     objects and nested attribute values remain shared. The subclass is preserved.
+
+Searches traverse fragments in depth-first document order but match only tags.
+Keyword attributes keep exact-match semantics and filter before predicates.
+Predicates should not modify the tree. `find()` stops after the first match.
 
 ### `Fragment`
 

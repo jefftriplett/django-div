@@ -49,6 +49,20 @@ for heading in page.find_all("h2"):
     print(heading.text)
 ```
 
+Pass a predicate as the first argument for class tokens or other conditions:
+
+```python
+page.find(lambda node: node.has_class("card"))
+page.find_all(lambda node: node.tag in {"h2", "h3"})
+page.iter_find(lambda node: node.has_class("external"), target="_blank")
+```
+
+All three search methods visit descendant tags in depth-first document order,
+excluding the root. They traverse fragments but never pass fragments or text
+nodes to predicates. Keyword attributes still match by exact equality and
+filter candidates before the predicate runs. `find()` stops at the first
+match. Predicates should inspect nodes without modifying the tree.
+
 ## Editing
 
 Parsed trees are ordinary models. Mutate `attrs`, append to `children`, then
@@ -62,6 +76,44 @@ for link in page.find_all("a", target="_blank"):
 
 print(page)
 ```
+
+### Transforming a copy
+
+`transform(visitor)` copies the tree and visits every node, including text,
+comments, fragments, and the root. Children are visited in document order
+before their parent, so parents receive their already-transformed children.
+
+```python
+from django_div import Tag
+
+
+def remove_scripts(node):
+    if isinstance(node, Tag) and node.tag == "script":
+        return None
+    return node
+
+
+cleaned = page.transform(remove_scripts)
+```
+
+Return the node to keep it, another `HtmlItem` to replace it, or `None` to
+remove it with its subtree. Return `Fragment(node.children)` to unwrap an
+element, or a fragment of new elements to replace one node with siblings.
+Returned replacements are not traversed again. Descendants of a removed
+parent have already been visited. Removing the root returns `None`.
+
+Callbacks receive copies, with independent child lists and attribute
+dictionaries and preserved subclasses. Nested attribute values remain
+shared, so replace a style/class mapping instead of editing it in place.
+A node appearing twice in the source is copied separately for each occurrence.
+A replacement supplied by the callback is used as-is; returning an external
+node shares that object. Exceptions propagate without changing the source
+unless the callback itself mutates shared or external objects.
+
+Traversal is iterative and supports deep trees. The callback must return an
+`HtmlItem` or `None`; wrap text in `Text` and siblings in `Fragment`.
+This is structural editing, not HTML sanitization. See the
+[tree filtering recipe](cookbook.md#keep-only-certain-elements).
 
 ## Choosing a parser
 
@@ -155,10 +207,10 @@ from_html('<svg viewBox="0 0 24 24"></svg>').attrs
 ## Class tokens and readable text
 
 Search attributes use exact equality. To find elements carrying a class
-among several tokens, filter the lazy iterator:
+among several tokens, pass a predicate to the lazy iterator:
 
 ```python
-links = [link for link in page.iter_find("a") if link.has_class("external")]
+links = page.iter_find(lambda node: node.tag == "a" and node.has_class("external"))
 page.get_text(" ", strip=True)  # trim text nodes and join with spaces
 ```
 

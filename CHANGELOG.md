@@ -7,6 +7,11 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ### Added
 
+- Search methods accept tag predicates while preserving exact attribute
+  matching. `HtmlItem.transform(visitor)` copies trees for bottom-up node
+  replacement, removal, and unwrapping, including fragments and deep trees.
+  ([#18](https://github.com/jefftriplett/django-div/issues/18))
+
 - `Tag.with_attrs(**attrs)` returns a shallow copy with normalized attribute
   replacements, independent attribute and child containers, and the original
   subclass preserved. ([#17](https://github.com/jefftriplett/django-div/issues/17))

@@ -311,31 +311,32 @@ KEEP_ATTRS = {"a": {"href", "title"}}
 DROP_ENTIRELY = {"script", "style"}
 
 
+def keep_node(item):
+    if isinstance(item, (Text, Fragment)):
+        return item
+    if isinstance(item, Tag):
+        if item.tag in DROP_ENTIRELY:
+            return None
+        if item.tag not in KEEP:
+            return Fragment(item.children)
+        item.attrs = {
+            name: value
+            for name, value in item.attrs.items()
+            if name in KEEP_ATTRS.get(item.tag, set())
+        }
+        return item
+    return None
+
+
 def keep_only(items):
-    """Reduce a tree to an allowlist of elements. Not a security boundary."""
-    kept = []
-    for item in items:
-        if isinstance(item, Text):
-            kept.append(item)
-        elif isinstance(item, Tag):
-            if item.tag in DROP_ENTIRELY:
-                continue
-            if item.tag not in KEEP:
-                kept.extend(keep_only(item.children))
-                continue
-            item.children = keep_only(item.children)
-            item.attrs = {
-                name: value
-                for name, value in item.attrs.items()
-                if name in KEEP_ATTRS.get(item.tag, set())
-            }
-            kept.append(item)
-    return kept
+    return Fragment(items).transform(keep_node)
 
 
 def test_keep_only_strips_elements_and_attributes():
     dirty = parse('<p onclick="evil()">ok <script>alert(1)</script><b>b</b></p>')
-    assert render(keep_only(dirty)) == "<p>ok <b>b</b></p>"
+    assert str(keep_only(dirty)) == "<p>ok <b>b</b></p>"
+    assert 'onclick="evil()"' in str(dirty[0])
+    assert str(keep_only(parse("<div><p>keep</p><!--drop--></div>"))) == "<p>keep</p>"
 
 
 def test_readable_text():

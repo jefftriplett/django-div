@@ -122,6 +122,13 @@ print(page)
 Use `tag.has_class("external")` to test a class token in a multi-class
 attribute. `tag.classes` returns tokens for string, list, and mapping values;
 `find(class_="external")` continues to compare the entire attribute.
+Use `page.find(lambda node: node.has_class("external"))` for token matching.
+All search methods accept predicates and exclude the root.
+
+`page.transform(visitor)` edits a copy, visiting children before parents.
+Return a node to keep or replace it, `None` to remove it, or a `Fragment`
+for sibling replacements. See the [parsing guide](https://django-div.readthedocs.io/en/latest/parsing/#transforming-a-copy)
+for copy and traversal semantics.
 
 `parse()` is the underlying function and always returns a list;
 `from_html()` unwraps the single-root case.
