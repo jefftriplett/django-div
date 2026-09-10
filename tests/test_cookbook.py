@@ -613,3 +613,48 @@ def test_find_links_by_class_token():
     assert [link.attrs["href"] for link in page.find_all("a", class_="external")] == [
         "/two"
     ]
+
+
+def open_graph(*, title, url, image, description, page_type="website"):
+    return Fragment(
+        Meta(property="og:title", content=title),
+        Meta(property="og:type", content=page_type),
+        Meta(property="og:url", content=url),
+        Meta(property="og:image", content=image),
+        Meta(property="og:description", content=description),
+    )
+
+
+def test_open_graph_metadata():
+    head = Head(
+        Title("Introducing django-div"),
+        open_graph(
+            title="Introducing django-div",
+            url="https://example.com/posts/django-div/",
+            image="https://example.com/images/django-div.png",
+            description="Build and parse HTML in Python.",
+            page_type="article",
+        ),
+    )
+    assert str(head) == (
+        "<head><title>Introducing django-div</title>"
+        '<meta property="og:title" content="Introducing django-div" />'
+        '<meta property="og:type" content="article" />'
+        '<meta property="og:url" content="https://example.com/posts/django-div/" />'
+        '<meta property="og:image" '
+        'content="https://example.com/images/django-div.png" />'
+        '<meta property="og:description" content="Build and parse HTML in Python." />'
+        "</head>"
+    )
+
+
+def test_open_graph_default_and_escaping():
+    metadata = open_graph(
+        title='A & "B"',
+        url="https://example.com/",
+        image="https://example.com/image.png",
+        description="<hello>",
+    )
+    assert metadata.find("meta", property="og:type").attrs["content"] == "website"
+    assert 'content="A &amp; &quot;B&quot;"' in str(metadata)
+    assert 'content="&lt;hello&gt;"' in str(metadata)

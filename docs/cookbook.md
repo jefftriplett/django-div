@@ -240,6 +240,56 @@ preserved as JSON `null`. No Django dependency is required.
 Use this helper for data instead of interpolating values into executable
 `Script` content. Plain HTML escaping is unsuitable inside a script element.
 
+### Open Graph metadata
+
+Group page metadata in a reusable function. `Fragment` emits sibling meta
+elements without adding a wrapper. Use `page_type` to avoid shadowing
+Python's built-in `type`; the metadata property remains `og:type`.
+
+```python
+from django_div import Fragment, Head, Meta, Title
+
+
+def open_graph(*, title, url, image, description, page_type="website"):
+    return Fragment(
+        Meta(property="og:title", content=title),
+        Meta(property="og:type", content=page_type),
+        Meta(property="og:url", content=url),
+        Meta(property="og:image", content=image),
+        Meta(property="og:description", content=description),
+    )
+
+
+head = Head(
+    Title("Introducing django-div"),
+    open_graph(
+        title="Introducing django-div",
+        url="https://example.com/posts/django-div/",
+        image="https://example.com/images/django-div.png",
+        description="Build and parse HTML in Python.",
+        page_type="article",
+    ),
+)
+```
+
+`str(head)` produces the following HTML (line breaks added for readability):
+
+```html
+<head>
+  <title>Introducing django-div</title>
+  <meta property="og:title" content="Introducing django-div" />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://example.com/posts/django-div/" />
+  <meta property="og:image" content="https://example.com/images/django-div.png" />
+  <meta property="og:description" content="Build and parse HTML in Python." />
+</head>
+```
+
+Use absolute URLs for the page and image. Values are escaped as ordinary
+attributes, so no `Raw` wrapper is needed. Omit `page_type` to use the default
+`"website"`. Extend the function with metadata your project needs, such as
+`og:site_name` or `og:image:alt`. See the [Open Graph protocol](https://ogp.me/).
+
 ### JSON-LD from a Pydantic model
 
 Schema.org markup is JSON in a `<script>`, and a `<script>` is raw text: the
