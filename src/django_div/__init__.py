@@ -70,7 +70,7 @@ __all__ = [
 # CalVer, YYYY.M.N: month and micro unpadded, micro 1-based per release
 # within the month. Adopted before anything shipped to PyPI, so no 0.x or
 # SemVer number ever appears there.
-__version__ = "2026.9.3"
+__version__ = "2026.9.4"
 
 
 #: What an attribute name may look like, per the WHATWG HTML syntax rules:
