@@ -1,7 +1,7 @@
 {
   "source": {
     "package": "@mdn/browser-compat-data",
-    "version": "8.0.12",
+    "version": "8.1.1",
     "license": "CC0-1.0",
     "url": "https://github.com/mdn/browser-compat-data"
   },
@@ -90,6 +90,11 @@
       "deprecated": false,
       "experimental": false,
       "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/button"
+    },
+    "camera": {
+      "deprecated": false,
+      "experimental": true,
+      "mdn_url": null
     },
     "canvas": {
       "deprecated": false,
@@ -321,6 +326,11 @@
       "experimental": false,
       "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/ins"
     },
+    "install": {
+      "deprecated": false,
+      "experimental": true,
+      "mdn_url": null
+    },
     "kbd": {
       "deprecated": false,
       "experimental": false,
@@ -380,6 +390,11 @@
       "deprecated": false,
       "experimental": false,
       "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/meter"
+    },
+    "microphone": {
+      "deprecated": false,
+      "experimental": true,
+      "mdn_url": null
     },
     "model": {
       "deprecated": false,
@@ -656,6 +671,11 @@
       "experimental": false,
       "mdn_url": "https://developer.mozilla.org/docs/Web/HTML/Reference/Elements/ul"
     },
+    "usermedia": {
+      "deprecated": false,
+      "experimental": true,
+      "mdn_url": null
+    },
     "var": {
       "deprecated": false,
       "experimental": false,
@@ -684,9 +704,12 @@
     "autocorrect",
     "autofocus",
     "class",
+    "containertiming",
+    "containertimingignore",
     "contenteditable",
     "dir",
     "draggable",
+    "elementtiming",
     "enterkeyhint",
     "exportparts",
     "headingoffset",
@@ -810,6 +833,8 @@
     "longdesc",
     "loop",
     "low",
+    "manifest",
+    "manifestId",
     "marginheight",
     "marginwidth",
     "max",

@@ -5,6 +5,24 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+## 2026.9.4 - 2026-09-11
+
+### Added
+
+- Four experimental elements MDN's browser-compat-data now tracks: `camera`,
+  `install`, `microphone`, and `usermedia`. 138 elements now, up from 134.
+  All four raise `ExperimentalElementWarning` when built, like `geolocation`
+  and `model`, and none has an MDN page yet, so their docstrings carry no
+  link.
+- An Open Graph metadata recipe in the cookbook, grouping the `og:` meta
+  elements in a function that returns a `Fragment`.
+
+### Changed
+
+- The browser-compat-data snapshot moves from 8.0.12 to 8.1.1, which also
+  adds `containertiming`, `containertimingignore`, `elementtiming`,
+  `manifest`, and `manifestId` to the attribute tables.
+
 ## 2026.9.3 - 2026-09-09
 
 ### Added

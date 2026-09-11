@@ -1,10 +1,10 @@
 # Building HTML
 
 Every HTML element has a class, named after the tag with a capital letter:
-`Div`, `P`, `H1`, `Textarea`. The set covers all 134 elements MDN tracks --
+`Div`, `P`, `H1`, `Textarea`. The set covers all 138 elements MDN tracks --
 the 113 current ones in the
 [WHATWG living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3)
-plus 19 deprecated and 2 experimental, which warn when you build one --
+plus 19 deprecated and 6 experimental, which warn when you build one --
 each documented on [MDN](https://developer.mozilla.org/en-US/docs/Web/HTML/Element).
 Children are positional arguments, attributes are keyword arguments.
 

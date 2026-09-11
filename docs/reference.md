@@ -289,15 +289,17 @@ the tag with a capital letter: `Div`, `P`, `H1`, `Textarea`, `Del`. Names are
 capitalized so they never collide with builtins like `input`, `object`, or
 `map`.
 
-**134 elements** are generated: the 113 current elements of the
+**138 elements** are generated: the 113 current elements of the
 [WHATWG HTML living standard](https://html.spec.whatwg.org/multipage/indices.html#elements-3),
 including recent additions like `search` and `selectedcontent`, plus 19
-deprecated and 2 experimental ones. The three sets are tracked against
+deprecated and 6 experimental ones. The three sets are tracked against
 [MDN's browser-compat-data](https://github.com/mdn/browser-compat-data/tree/main/html/elements).
 Each class's docstring links to its
 [MDN element reference](https://developer.mozilla.org/en-US/docs/Web/HTML/Element),
 the best per-element documentation available, so `help(Div)` points at the
-right page.
+right page. Five elements browser-compat-data tracks have no MDN page yet
+(`camera`, `install`, `microphone`, `model`, `usermedia`); their docstrings
+carry no link rather than one that 404s.
 
 ### Deprecated and experimental elements
 
@@ -356,6 +358,7 @@ current: `deprecated` and `experimental`.
 | `Body` | `<body>` |  |
 | `Br` | `<br>` | void |
 | `Button` | `<button>` |  |
+| `Camera` | `<camera>` | experimental |
 | `Canvas` | `<canvas>` |  |
 | `Caption` | `<caption>` |  |
 | `Center` | `<center>` | deprecated |
@@ -402,6 +405,7 @@ current: `deprecated` and `experimental`.
 | `Img` | `<img>` | void |
 | `Input` | `<input>` | void |
 | `Ins` | `<ins>` |  |
+| `Install` | `<install>` | experimental |
 | `Kbd` | `<kbd>` |  |
 | `Label` | `<label>` |  |
 | `Legend` | `<legend>` |  |
@@ -414,6 +418,7 @@ current: `deprecated` and `experimental`.
 | `Menu` | `<menu>` |  |
 | `Meta` | `<meta>` | void |
 | `Meter` | `<meter>` |  |
+| `Microphone` | `<microphone>` | experimental |
 | `Model` | `<model>` | experimental |
 | `Nav` | `<nav>` |  |
 | `Nobr` | `<nobr>` | deprecated |
@@ -469,6 +474,7 @@ current: `deprecated` and `experimental`.
 | `Tt` | `<tt>` | deprecated |
 | `U` | `<u>` |  |
 | `Ul` | `<ul>` |  |
+| `Usermedia` | `<usermedia>` | experimental |
 | `Var` | `<var>` |  |
 | `Video` | `<video>` |  |
 | `Wbr` | `<wbr>` | void |

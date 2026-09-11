@@ -112,7 +112,9 @@ DOCUMENT_ELEMENTS = frozenset({"body", "head", "html"})
 #: Elements shipping in one engine but not settled across them. Generated so
 #: they are usable, and named here so a codebase can find its own bets, but
 #: silent unless the warning is asked for: see warn_element().
-EXPERIMENTAL_ELEMENTS = frozenset({"geolocation", "model"})
+EXPERIMENTAL_ELEMENTS = frozenset(
+    {"camera", "geolocation", "install", "microphone", "model", "usermedia"}
+)
 
 #: Keys Pydantic passes back when it re-validates a serialized Tag.
 FIELD_KEYS = frozenset({"attrs", "children", "tag", "type"})
@@ -991,6 +993,7 @@ _TAGS = [
     "body",
     "br",
     "button",
+    "camera",
     "canvas",
     "caption",
     "center",
@@ -1037,6 +1040,7 @@ _TAGS = [
     "img",
     "input",
     "ins",
+    "install",
     "kbd",
     "label",
     "legend",
@@ -1049,6 +1053,7 @@ _TAGS = [
     "menu",
     "meta",
     "meter",
+    "microphone",
     "model",
     "nav",
     "nobr",
@@ -1104,6 +1109,7 @@ _TAGS = [
     "tt",
     "u",
     "ul",
+    "usermedia",
     "var",
     "video",
     "wbr",
@@ -1113,7 +1119,7 @@ _TAGS = [
 #: Standard elements MDN has no page for yet, so their docstrings carry no
 #: link rather than one that 404s. Sourced from mdn/browser-compat-data,
 #: which records a null mdn_url for them.
-_UNDOCUMENTED = frozenset({"model"})
+_UNDOCUMENTED = frozenset({"camera", "install", "microphone", "model", "usermedia"})
 
 for _tag in _TAGS:
     _cls = tag_class(_tag)

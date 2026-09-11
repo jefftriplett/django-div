@@ -162,6 +162,9 @@ class Br(Tag):
 class Button(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Camera(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Canvas(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -300,6 +303,9 @@ class Input(Tag):
 class Ins(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Install(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Kbd(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -334,6 +340,9 @@ class Meta(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Meter(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
+class Microphone(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
 class Model(Tag):
@@ -501,6 +510,9 @@ class U(Tag):
 class Ul(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
+class Usermedia(Tag):
+    def __init__(self, *children: Any, **attrs: Any) -> None: ...
+
 class Var(Tag):
     def __init__(self, *children: Any, **attrs: Any) -> None: ...
 
@@ -539,6 +551,7 @@ __all__ = [
     "Body",
     "Br",
     "Button",
+    "Camera",
     "Canvas",
     "Caption",
     "Center",
@@ -595,6 +608,7 @@ __all__ = [
     "Img",
     "Input",
     "Ins",
+    "Install",
     "JSON_LD_ESCAPES",
     "JsonLd",
     "JsonScript",
@@ -610,6 +624,7 @@ __all__ = [
     "Menu",
     "Meta",
     "Meter",
+    "Microphone",
     "Model",
     "Nav",
     "Nobr",
@@ -672,6 +687,7 @@ __all__ = [
     "Tt",
     "U",
     "Ul",
+    "Usermedia",
     "VOID_ELEMENTS",
     "Var",
     "Video",
