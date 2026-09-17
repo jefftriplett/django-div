@@ -18,7 +18,7 @@ void elements self-close, and Python attribute spellings map onto HTML ones.
 ## Why this exists
 
 Most HTML-in-Python libraries build markup and stop there. Here the tree is a
-Pydantic model, which means the same objects can go in three directions:
+Pydantic model, which means the same objects can go in four directions:
 
 <div class="grid cards" markdown>
 
@@ -104,6 +104,30 @@ for link in page.find_all("a", target="_blank"):
 print(page)
 ```
 
+## Where to next
+
+The four cards above cover building, parsing, serializing, and Django. Beyond
+those:
+
+- [Markdown](markdown.md): render the tree as Markdown, read Markdown in
+- Cookbooks: [HTML](cookbook.md) · [Django](django-cookbook.md) ·
+  [Markdown](markdown-cookbook.md)
+- [API reference](reference.md): every function, class, and constant
+- [Contributing](contributing.md): setup, conventions, tests
+
+## Reusable elements and browser data
+
+Derive element variants with `with_attrs()`, render explicit ARIA states
+from Python booleans, and pass browser data with `JsonScript`.
+The [cookbook](cookbook.md) includes button variants, disclosures,
+HTML templates, and JSON data recipes.
+
+Search by class tokens or custom conditions with predicates, and use
+`transform()` to replace, remove, or unwrap nodes on a copied tree.
+See [searching](parsing.md#searching) and
+[transforming a copy](parsing.md#transforming-a-copy) for traversal and
+copy semantics.
+
 ## llms.txt
 
 This documentation is available in the [llms.txt](https://llmstxt.org/)
@@ -125,31 +149,6 @@ the page name:
 https://django-div.readthedocs.io/en/latest/building.md
 https://django-div.readthedocs.io/en/latest/django.md
 ```
-
-## Where to next
-
-- [Building HTML](building.md): elements, attributes, escaping, categories
-- [Parsing HTML](parsing.md): `from_html()`, searching, editing, parsers
-- [Serializing](serializing.md): JSON round trips
-- [Markdown](markdown.md): render the tree as Markdown, read Markdown in
-- [Django](django.md): components as templates, escaping interop
-- Cookbooks: [HTML](cookbook.md) · [Django](django-cookbook.md) ·
-  [Markdown](markdown-cookbook.md)
-- [API reference](reference.md): every function, class, and constant
-- [Contributing](contributing.md): setup, conventions, tests
-
-## Reusable elements and browser data
-
-Derive element variants with `with_attrs()`, render explicit ARIA states
-from Python booleans, and pass browser data with `JsonScript`.
-The [cookbook](cookbook.md) includes button variants, disclosures,
-HTML templates, and JSON data recipes.
-
-Search by class tokens or custom conditions with predicates, and use
-`transform()` to replace, remove, or unwrap nodes on a copied tree.
-See [searching](parsing.md#searching) and
-[transforming a copy](parsing.md#transforming-a-copy) for traversal and
-copy semantics.
 
 ## Where it came from
 

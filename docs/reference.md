@@ -247,23 +247,41 @@ closed early and parse the remainder as live markup.
 `render_json_ld(data)`
 :   Serialize a model, dict, or list as JSON that is safe inside a
     `<script>`. The escaping is lossless, so `json.loads` returns what went
-    in.
+    in. `JsonLd` and `JsonScript` call it for you; see the
+    [JSON-LD recipe](cookbook.md#json-ld-from-a-pydantic-model).
 
 `as_json(value)`
 :   The `json.dumps(..., default=...)` hook that reaches Pydantic models.
-
-`render_attrs(attrs)` / `render_class(value)` / `render_style(value)`
-:   The attribute rendering helpers.
-
-`iter_children(children)`
-:   Coerce arbitrary values into items, applying the drop, flatten, trust,
-    and escape rules.
 
 `is_collection(value)`
 :   Whether a value should be flattened as a group of children.
 
 `marker()`
 :   Django's `mark_safe` if installed, otherwise a passthrough.
+
+`warn_element(tag)`
+:   Raise `DeprecatedElementWarning` or `ExperimentalElementWarning` for a
+    retired or unsettled element, else do nothing. Called when markup is
+    authored, never when it is parsed or deserialized. Warnings de-duplicate
+    per call site, so a tag in a loop reports once. See
+    [Deprecated and experimental elements](#deprecated-and-experimental-elements).
+
+### Internals
+
+These are module-level functions rather than exported API: they are absent
+from `__all__` and from the type stub, so a type checker rejects importing
+them even though the import works at run time. They are listed because they
+turn up in tracebacks, not because a caller should need them.
+
+`render_attrs(attrs)` / `render_class(value)` / `render_style(value)`
+:   The attribute rendering helpers, called during `render()`. To read or
+    build class tokens yourself, use the `classes` property and
+    [`with_attrs()`](#tag) instead.
+
+`iter_children(children)`
+:   Coerce arbitrary values into items, applying the drop, flatten, trust,
+    and escape rules. [`Fragment(...)`](#fragment) applies the same rules and
+    gives you something you can render.
 
 ## Constants
 
@@ -505,6 +523,9 @@ current: `deprecated` and `experimental`.
 
 `render_component(component, *, context)`
 :   Call a component with the parts of the context it declares.
+
+`Template` is the adapter `DjangoDivTemplates` hands back so Django has
+something with a `render()` on it. Django constructs it; you do not.
 
 Ordinary function components reuse inspected keyword parameter names in a
 bounded cache of 256 functions. Callable objects are inspected each time, so

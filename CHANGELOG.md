@@ -5,6 +5,15 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+### Changed
+
+- The home page drops the link list that duplicated the four cards, and
+  moves the `llms.txt` section below the content sections.
+- The API reference documents `warn_element()`, notes that
+  `render_attrs()`, `render_class()`, `render_style()`, and
+  `iter_children()` are internals absent from `__all__` and the type stub,
+  and names the `Template` adapter in `django_div.django`.
+
 ## 2026.9.5 - 2026-09-17
 
 ### Added
