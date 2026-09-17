@@ -5,6 +5,14 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ## Unreleased
 
+## 2026.9.5 - 2026-09-17
+
+### Added
+
+- `LLMs.txt` and `LLMs-full.txt` project URLs, so PyPI links to the
+  `llms.txt` and `llms-full.txt` files the docs build publishes.
+  ([#20](https://github.com/jefftriplett/django-div/pull/20))
+
 ## 2026.9.4 - 2026-09-11
 
 ### Added
