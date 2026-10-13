@@ -16,11 +16,26 @@ def read(name):
     return (ROOT / name).read_text()
 
 
-def test_documented_python_floor_matches_pyproject():
-    """'Python 3.12 or later' tracks requires-python."""
-    metadata = tomllib.loads(read("pyproject.toml"))
-    floor = metadata["project"]["requires-python"].lstrip(">=")
-    claim = f"needs Python {floor} or later"
+def test_documented_versions_match_pyproject():
+    """The supported Python and Django versions track the classifiers."""
+    project = tomllib.loads(read("pyproject.toml"))["project"]
+    floor = project["requires-python"].lstrip(">=")
+
+    def versions(prefix):
+        return [
+            c.removeprefix(prefix)
+            for c in project["classifiers"]
+            if re.fullmatch(re.escape(prefix) + r"\d+\.\d+", c)
+        ]
+
+    pythons = versions("Programming Language :: Python :: ")
+    djangos = versions("Framework :: Django :: ")
+    assert pythons[0] == floor
+    claim = (
+        f"supports Python {pythons[0]} through {pythons[-1]}"
+        f", including the free-threaded\nbuilds"
+        f", and Django {', '.join(djangos[:-1])}, and {djangos[-1]}."
+    )
     for name in ("docs/index.md", "README.md"):
         assert claim in read(name), name
 

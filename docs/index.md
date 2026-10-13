@@ -73,7 +73,8 @@ uv add 'django-div[html5]'   # spec-exact parsing, ~3x slower than lxml
 uv add 'django-div[markdown]' # plus from_markdown(), via markdown-it-py
 ```
 
-django-div needs Python 3.12 or later.
+django-div supports Python 3.12 through 3.15, including the free-threaded
+builds, and Django 5.2, 6.0, and 6.1.
 Pydantic is the only hard dependency. Parsers are optional and their imports
 are guarded, so building HTML pulls in nothing else. Django is optional too:
 only `django_div.django` imports it.

@@ -7,6 +7,11 @@ Versions are CalVer, `YYYY.M.N`: an unpadded month, and a micro that starts at
 
 ### Changed
 
+- CI tests every supported Python on Django 6.1, and every supported Django
+  (5.2, 6.0, 6.1) on Python 3.12. Python 3.15 jobs use the final release and
+  lxml's published wheels instead of building lxml from source.
+- The README and docs list the supported Python and Django versions.
+
 - The home page drops the link list that duplicated the four cards, and
   moves the `llms.txt` section below the content sections.
 - The API reference documents `warn_element()`, notes that
