@@ -127,8 +127,10 @@ nav is appended alphabetically rather than dropped.
 ## CI
 
 `.github/workflows/test.yml` runs pytest on Python 3.12, 3.13, 3.14, and
-3.15, including the free-threaded builds `3.14t` and `3.15t`. The same file
-runs lint.
+3.15, including the free-threaded builds `3.14t` and `3.15t`, all against
+Django 6.1. Python 3.12 also runs against Django 5.2 and 6.0, so every
+supported Python and every supported Django gets tested without the full
+cross product. The same file runs lint.
 
 Read the Docs builds and deploys the documentation. `.readthedocs.yaml`
 configures it, and it runs the same `zensical build` plus `gen_llms.py` steps
